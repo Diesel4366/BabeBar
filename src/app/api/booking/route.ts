@@ -21,16 +21,18 @@ export async function POST(req: Request) {
       const { data: newProfile, error: profileError } = await supabaseAdmin
         .from('profiles')
         .insert([{ 
-          id: crypto.randomUUID(), // В реальном приложении лучше использовать Auth
+          id: crypto.randomUUID(),
           name, 
           phone 
         }])
         .select()
         .single();
 
-      if (profileError) throw profileError;
+      if (profileError || !newProfile) throw profileError || new Error('Failed to create profile');
       profile = newProfile;
     }
+
+    if (!profile) throw new Error('Profile not found');
 
     // 2. Создаем запись
     const startTime = time;
@@ -54,7 +56,7 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (appError) throw appError;
+    if (appError || !appointment) throw appError || new Error('Failed to create appointment');
 
     // 3. Привязываем услуги
     const appointmentServices = services.map((s: any) => ({
