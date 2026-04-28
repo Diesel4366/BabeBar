@@ -1,20 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { createClientClient } from '@/lib/supabase';
 import { Service } from '@/types';
 import { Plus, Trash2, Edit2, Clock, DollarSign } from 'lucide-react';
+import Image from 'next/image';
 
 export default function AdminServices() {
   const [services, setServices] = useState<Service[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const supabase = createClientClient();
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
-
-  async function fetchServices() {
+  const fetchServices = useCallback(async () => {
+    setIsLoading(true);
     const { data, error } = await supabase
       .from('services')
       .select('*')
@@ -24,16 +22,20 @@ export default function AdminServices() {
       setServices(data);
     }
     setIsLoading(false);
-  }
+  }, [supabase]);
+
+  useEffect(() => {
+    fetchServices();
+  }, [fetchServices]);
 
   return (
     <div className="p-8 max-w-6xl mx-auto">
       <div className="flex justify-between items-center mb-8">
         <div>
-          <h1 className="text-3xl font-bold gold-text mb-2">Управление услугами</h1>
+          <h1 className="text-3xl font-bold text-primary mb-2">Управление услугами</h1>
           <p className="text-muted-foreground">Добавляйте и редактируйте услуги вашего салона</p>
         </div>
-        <button className="gold-button flex items-center gap-2">
+        <button className="bg-primary text-black font-bold py-2 px-6 rounded-md flex items-center gap-2">
           <Plus size={20} />
           Добавить услугу
         </button>
@@ -46,11 +48,11 @@ export default function AdminServices() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {services.map((service) => (
-            <div key={service.id} className="premium-card p-6 flex flex-col justify-between">
+            <div key={service.id} className="bg-card border border-white/10 p-6 flex flex-col justify-between rounded-xl">
               <div>
-                <div className="h-40 bg-muted rounded-lg mb-4 flex items-center justify-center text-muted-foreground overflow-hidden">
+                <div className="relative h-40 bg-muted rounded-lg mb-4 flex items-center justify-center text-muted-foreground overflow-hidden">
                   {service.image_url ? (
-                    <img src={service.image_url} alt={service.name} className="w-full h-full object-cover" />
+                    <Image src={service.image_url} alt={service.name} fill className="object-cover" />
                   ) : (
                     <span>Нет фото</span>
                   )}
@@ -67,7 +69,7 @@ export default function AdminServices() {
                     <Clock size={16} />
                     <span>{service.duration_minutes} мин</span>
                   </div>
-                  <div className="flex items-center gap-1 gold-text font-bold">
+                  <div className="flex items-center gap-1 text-primary font-bold">
                     <DollarSign size={16} />
                     <span>{service.price} ₽</span>
                   </div>
