@@ -182,15 +182,14 @@ export const BookingDrawer: React.FC = () => {
                           const isActive = selectedDate?.toDateString() === date.toDateString();
                           return (
                             <button
-                              key={offset}
-                              onClick={() => setSelectedDate(date)}
-                              className={`p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
-                                isActive 
-                                  ? 'border-primary bg-pink-50 text-primary shadow-sm' 
-                                  : 'border-zinc-100 hover:border-zinc-300'
-                              }`}
-                            >
-                              <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
+                            key={offset}
+                            onClick={() => setSelectedDate(date)}
+                            className={`appearance-none bg-transparent p-3 rounded-xl border flex flex-col items-center gap-1 transition-all ${
+                              isActive 
+                                ? 'border-primary bg-pink-50 text-primary shadow-sm' 
+                                : 'border-zinc-100 hover:border-zinc-300'
+                            }`}
+                            >                              <span className="text-[8px] font-black uppercase tracking-tighter opacity-60">
                                 {date.toLocaleDateString('ru-RU', { weekday: 'short' })}
                               </span>
                               <span className="text-sm font-black">{date.getDate()}</span>
@@ -213,10 +212,10 @@ export const BookingDrawer: React.FC = () => {
                               <button
                                 key={time}
                                 onClick={() => setSelectedTime(time)}
-                                className={`p-3 rounded-xl border text-sm font-bold transition-all ${
+                                className={`appearance-none p-3 rounded-xl border text-sm font-bold transition-all ${
                                   isActive 
                                     ? 'border-primary bg-pink-50 text-primary shadow-sm' 
-                                    : 'border-zinc-100 hover:border-zinc-300'
+                                    : 'border-zinc-100 hover:border-zinc-300 bg-transparent'
                                 }`}
                               >
                                 {time}
@@ -243,7 +242,7 @@ export const BookingDrawer: React.FC = () => {
                           placeholder="Ваше имя"
                           value={formData.name}
                           onChange={e => setFormData({ ...formData, name: e.target.value })}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border border-zinc-100 focus:outline-none focus:border-primary transition-colors text-sm font-medium"
+                          className="appearance-none bg-transparent w-full pl-12 pr-4 py-4 rounded-2xl border border-zinc-100 focus:outline-none focus:border-primary transition-colors text-sm font-medium"
                         />
                       </div>
                       
@@ -255,7 +254,7 @@ export const BookingDrawer: React.FC = () => {
                           placeholder="+7 (___) ___-__-__"
                           value={formData.phone}
                           onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                          className="w-full pl-12 pr-4 py-4 rounded-2xl border border-zinc-100 focus:outline-none focus:border-primary transition-colors text-sm font-medium"
+                          className="appearance-none bg-transparent w-full pl-12 pr-4 py-4 rounded-2xl border border-zinc-100 focus:outline-none focus:border-primary transition-colors text-sm font-medium"
                         />
                       </div>
                     </div>
