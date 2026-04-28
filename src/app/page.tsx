@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase';
 import { Service } from '@/types';
-import { Clock, DollarSign, Calendar, MessageSquare, Instagram } from 'lucide-react';
+import { Clock, DollarSign, Calendar, MessageSquare, Camera } from 'lucide-react';
 
 export default async function Home() {
   const { data: services } = await supabaseAdmin
@@ -76,10 +76,10 @@ export default async function Home() {
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 text-center">
           <div className="space-y-4">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Instagram className="gold-text" size={32} />
+              <Camera className="gold-text" size={32} />
             </div>
-            <h3 className="text-xl font-semibold">Следите за нами</h3>
-            <p className="text-muted-foreground">Актуальные работы и акции в нашем Instagram</p>
+            <h3 className="text-xl font-semibold">Наши работы</h3>
+            <p className="text-muted-foreground">Следите за обновлениями в наших соцсетях</p>
           </div>
           <div className="space-y-4">
             <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
