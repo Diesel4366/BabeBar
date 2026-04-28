@@ -14,8 +14,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ services }) => {
   const router = useRouter();
 
   const handleServiceClick = (service: Service) => {
-    // В будущем можно передать ID: router.push(`/booking?service=${service.id}`)
-    router.push('/booking');
+    router.push(`/booking?serviceId=${service.id}`);
   };
 
   return (
