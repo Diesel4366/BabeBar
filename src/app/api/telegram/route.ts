@@ -21,7 +21,7 @@ export async function POST(req: Request) {
     if (message) {
       const chatId = message.chat.id;
       const text = message.text;
-      console.log(`Message from \${chatId}: \${text}`);
+      console.log(`Message from ${chatId}: ${text}`);
 
       if (text === '/start') {
         const response = await sendTelegramMessage(chatId, 'Добро пожаловать в BABEBAR! 🌟\n\nЯ помогу вам записаться на наши услуги. Выберите действие ниже:', {
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     if (callback_query) {
       const chatId = callback_query.message.chat.id;
       const data = callback_query.data;
-      console.log(`Callback from \${chatId}: \${data}`);
+      console.log(`Callback from ${chatId}: ${data}`);
 
       if (data === 'view_services') {
         const { data: services, error: dbError } = await supabaseAdmin
@@ -52,8 +52,8 @@ export async function POST(req: Request) {
 
         if (services && services.length > 0) {
           const buttons = services.map(s => ([{
-            text: `\${s.name} - \${s.price} ₽`,
-            callback_data: `service_\${s.id}`
+            text: `${s.name} - ${s.price} ₽`,
+            callback_data: `service_${s.id}`
           }]));
           
           await sendTelegramMessage(chatId, 'Выберите интересующую вас услугу:', {
@@ -77,7 +77,7 @@ export async function POST(req: Request) {
 }
 
 async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: any) {
-  const url = `https://api.telegram.org/bot\${TELEGRAM_TOKEN}/sendMessage`;
+  const url = `https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage`;
   const body: any = {
     chat_id: chatId,
     text: text,
@@ -92,5 +92,6 @@ async function sendTelegramMessage(chatId: number, text: string, replyMarkup?: a
     body: JSON.stringify(body),
   });
   
-  return await res.json();
+  const result = await res.json();
+  return result;
 }
