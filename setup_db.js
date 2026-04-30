@@ -33,7 +33,7 @@ const sql = `
 
   -- Таблица профилей
   CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     phone TEXT UNIQUE NOT NULL,
     name TEXT,
     role TEXT DEFAULT 'client',
@@ -51,6 +51,13 @@ const sql = `
     status TEXT DEFAULT 'active',
     total_price INTEGER,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+  );
+
+  -- Таблица связей записей и услуг
+  CREATE TABLE IF NOT EXISTS appointment_services (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    appointment_id UUID REFERENCES appointments(id) ON DELETE CASCADE,
+    service_id UUID REFERENCES services(id) ON DELETE CASCADE
   );
 
   -- Таблица графика работы

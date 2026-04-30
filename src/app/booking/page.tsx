@@ -259,9 +259,9 @@ function BookingContent() {
                     <input
                       type="tel"
                       required
-                      placeholder="+7 (___) ___-__-__"
+                      placeholder="+7 (999) 000-00-00"
                       value={formData.phone}
-                      onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                      onChange={handlePhoneChange}
                       className="w-full bg-white pl-16 pr-8 py-6 rounded-3xl border border-zinc-100 focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold"
                     />
                   </div>
@@ -304,6 +304,30 @@ function BookingContent() {
           <div className="max-w-4xl mx-auto flex justify-between items-center gap-6">
             <div className="flex flex-col">
               <span className="text-[10px] font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Сумма</span>
+              <span className="text-xl font-black">{totalPrice} ₽</span>
+            </div>
+            <button
+              disabled={step === 1 ? selectedServices.length === 0 : !selectedDate || !selectedTime}
+              onClick={() => setStep(step + 1)}
+              className="btn-primary flex-1 py-5 text-[10px]"
+            >
+              {step === 1 ? 'ВЫБРАТЬ ВРЕМЯ' : 'ДАЛЕЕ'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function BookingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white flex items-center justify-center"><div className="w-10 h-10 border-4 border-zinc-100 border-t-primary rounded-full animate-spin" /></div>}>
+      <BookingContent />
+    </Suspense>
+  );
+}
+font-black text-zinc-400 uppercase tracking-widest leading-none mb-1">Сумма</span>
               <span className="text-xl font-black">{totalPrice} ₽</span>
             </div>
             <button

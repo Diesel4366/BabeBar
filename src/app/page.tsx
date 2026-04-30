@@ -21,6 +21,8 @@ export default async function Home() {
       
       <ServicesGrid services={services || []} />
 
+      <Advantages />
+
       {/* Gallery Section */}
       <section id="gallery" className="py-32 bg-zinc-50 overflow-hidden">
         <div className="container-custom">
@@ -137,6 +139,11 @@ export default async function Home() {
             <Link href="#" className="hover:text-[#0A0A0A] transition-colors">Terms</Link>
           </div>
         </div>
+      </footer>
+    </main>
+  );
+}
+iv>
       </footer>
     </main>
   );

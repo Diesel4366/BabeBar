@@ -1,45 +1,25 @@
-# Проект: BABEBAR — Modern Beauty Studio
+# Project State: BabeBar / BeautyBook
 
-## 📅 Дата среза: 28 апреля 2026 г.
+## 🎯 Current Focus
+- Phase 1: MVP for online booking via Telegram and Web.
+- Fixing deployment and stabilizing the bot.
 
-## 🚀 Текущий стек
-- **Framework**: Next.js 16.2.4 (React 19)
-- **Styling**: Tailwind CSS v4 (с кастомными правками в `globals.css`)
-- **Database/Auth**: Supabase (@supabase/supabase-js)
-- **Animations**: Framer Motion
-- **Icons**: Lucide React (v1.11.0 — внимание: иконка `Instagram` отсутствует, заменена на `Camera`)
-- **Deployment**: Vercel (GitHub: `Diesel4366/BabeBar`)
+## ✅ Completed
+- [x] Initial setup with Next.js 16.2.4 & Tailwind 4.
+- [x] Supabase integration (Client/Admin).
+- [x] Deployment fix: Resolved `lucide-react` icon issues.
+- [x] Landing page structure: Hero, Services, Contacts.
+- [x] Telegram Bot: Basic flow (Service -> Date -> Time).
 
-## 🎨 Визуальная концепция: "Modern Luxe"
-- **Шрифты**: Основной и единственный — `Inter` (стандарт современного премиального веба).
-- **Цвета**:
-  - Фон: `#FAFAFA` (светло-серый, почти белый).
-  - Текст: `#0A0A0A` (глубокий черный).
-  - Акцент: `#D14D72` (элегантный розовый/малиновый для CTA и цен).
-- **Компоненты**:
-  - **Bento Grid**: Сетка услуг с карточками, имеющими большие скругления (`2rem`) и мягкие тени.
-  - **Header**: Полупрозрачная фиксированная шапка с навигацией.
-  - **Cards**: Использование `card-modern` для единообразия в админке и на фронте.
+## 🚀 In Progress
+- [ ] **Database Persistence**: Saving bot bookings to the `appointments` table.
+- [ ] **Dynamic Availability**: Bot should check existing appointments in Supabase before showing free slots.
 
-## 🛠 Ключевые изменения в этой сессии
-1. **Полный редизайн**: Переход от "брутального" и "золотого" стилей к чистому "Modern Luxe".
-2. **Исправление билда (Tailwind 4)**: Обнаружен баг с `@apply` для стандартных классов в `globals.css` при сборке на Vercel. Решение: критические компоненты (`container-custom`, `btn-primary`, `card-modern`) переписаны на **чистый CSS** в том же файле.
-3. **Исправление Lucide-React**: В установленной версии библиотеки отсутствует иконка `Instagram`. Во всех компонентах заменена на `Camera`.
-4. **Админ-панель**: Полностью синхронизирована по стилям с главной страницей. Исправлены ошибки линтинга (вызов функций до объявления).
-
-## 📍 Структура проекта
-- `src/components/shared/Header.tsx`: Глобальная шапка.
-- `src/components/client/Hero.tsx`: Главный экран.
-- `src/components/client/ServicesGrid.tsx`: Сетка услуг из БД.
-- `src/app/page.tsx`: Главная страница со всеми секциями.
-- `src/app/admin/services/page.tsx`: Управление услугами.
-- `src/app/globals.css`: Токены дизайна и базовые CSS-классы.
-
-## 📝 Задачи на следующую сессию
-- [ ] Добавить форму бронирования на сайте (интеграция с Telegram-ботом).
-- [ ] Настроить полноценную авторизацию для админ-панели через Supabase.
-- [ ] Добавить галерею реальных работ (Gallery.tsx был удален при переходе к Modern Luxe, можно вернуть в новом стиле).
-- [ ] Оптимизировать шрифты (сейчас только Inter).
+## 📅 Roadmap
+- [ ] Premium Dark Theme implementation (as per Obsidian notes).
+- [ ] OTP Authentication for clients on the website.
+- [ ] Admin dashboard at `/admin`.
+- [ ] Automatic reminders via Telegram bot.
 
 ---
-*Этот лог создан для переноса контекста между сессиями.*
+*Updated: 2026-04-30*
