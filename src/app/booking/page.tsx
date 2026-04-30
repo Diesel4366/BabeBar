@@ -17,6 +17,7 @@ function BookingContent() {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
+  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -41,6 +42,24 @@ function BookingContent() {
     }
     loadData();
   }, [serviceIdFromUrl]);
+
+  useEffect(() => {
+    if (selectedDate) {
+      async function checkAvailability() {
+        try {
+          const formattedDate = selectedDate!.toISOString().split('T')[0];
+          const res = await fetch(`/api/availability?date=${formattedDate}`);
+          const data = await res.json();
+          if (data.occupiedSlots) {
+            setOccupiedSlots(data.occupiedSlots);
+          }
+        } catch (err) {
+          console.error('Failed to fetch availability:', err);
+        }
+      }
+      checkAvailability();
+    }
+  }, [selectedDate]);
 
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0);
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
