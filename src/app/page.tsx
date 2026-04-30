@@ -30,12 +30,52 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="aspect-[3/4] bg-white rounded-[2rem] border border-zinc-100 flex items-center justify-center group overflow-hidden relative">
-                <div className="absolute inset-0 bg-primary/5 group-hover:bg-primary/10 transition-colors" />
-                <Camera size={32} className="text-zinc-200 group-hover:scale-110 transition-transform duration-500" />
-              </div>
+            {[
+              { id: 1, url: 'https://www.instagram.com/babe_bar_nn/' },
+              { id: 2, url: 'https://www.instagram.com/babe_bar_nn/' },
+              { id: 3, url: 'https://www.instagram.com/babe_bar_nn/' },
+              { id: 4, url: 'https://www.instagram.com/babe_bar_nn/' },
+            ].map((item) => (
+              <Link 
+                key={item.id} 
+                href={item.url}
+                target="_blank"
+                className="aspect-[3/4] bg-white rounded-[2rem] border border-zinc-100 flex items-center justify-center group overflow-hidden relative"
+              >
+                {/* Placeholder image layer */}
+                <div className="absolute inset-0 bg-zinc-200 animate-pulse group-hover:scale-110 transition-transform duration-700" />
+                
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
+                  <svg 
+                    width="32" 
+                    height="32" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="white" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
+                  </svg>
+                  <span className="text-white text-[10px] font-bold uppercase tracking-widest">Смотреть</span>
+                </div>
+                
+                <Camera size={32} className="text-zinc-300 group-hover:opacity-0 transition-opacity relative z-10" />
+              </Link>
             ))}
+          </div>
+
+          <div className="mt-16 text-center">
+            <Link 
+              href="https://www.instagram.com/babe_bar_nn/" 
+              target="_blank"
+              className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-primary transition-colors"
+            >
+              Больше в Instagram 
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </Link>
           </div>
         </div>
       </section>
