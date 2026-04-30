@@ -272,24 +272,31 @@ function BookingContent() {
                 <motion.section initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block mb-6">Свободное время</span>
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
-                    {['10:00', '11:00', '12:00', '13:00', '14:30', '15:30', '17:00', '18:30', '19:30', '21:00'].map(time => {
-                      const isSelected = selectedTime === time;
-                      const isAvailable = isSlotAvailable(time);
-                      return (
-                        <button
-                          key={time}
-                          disabled={!isAvailable}
-                          onClick={() => setSelectedTime(time)}
-                          className={`py-5 rounded-2xl border font-black text-sm transition-all duration-300 ${
-                            isSelected ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' : 
-                            !isAvailable ? 'border-zinc-50 bg-zinc-50 text-zinc-200 cursor-not-allowed opacity-50' :
-                            'border-white bg-white hover:border-zinc-200 shadow-sm'
-                          }`}
-                        >
-                          {time}
-                        </button>
-                      );
-                    })}
+                    {(() => {
+                      const times = [];
+                      for (let hour = 10; hour < 21; hour++) {
+                        times.push(`${hour}:00`);
+                        times.push(`${hour}:30`);
+                      }
+                      return times.map(time => {
+                        const isSelected = selectedTime === time;
+                        const isAvailable = isSlotAvailable(time);
+                        return (
+                          <button
+                            key={time}
+                            disabled={!isAvailable}
+                            onClick={() => setSelectedTime(time)}
+                            className={`py-5 rounded-2xl border font-black text-sm transition-all duration-300 ${
+                              isSelected ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' : 
+                              !isAvailable ? 'border-zinc-50 bg-zinc-50 text-zinc-200 cursor-not-allowed opacity-50' :
+                              'border-white bg-white hover:border-zinc-200 shadow-sm'
+                            }`}
+                          >
+                            {time}
+                          </button>
+                        );
+                      });
+                    })()}
                   </div>
                 </motion.section>
               )}
