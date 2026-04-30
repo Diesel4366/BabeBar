@@ -17,7 +17,7 @@ function BookingContent() {
   const [selectedServices, setSelectedServices] = useState<Service[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedTime, setSelectedTime] = useState<string | null>(null);
-  const [occupiedSlots, setOccupiedSlots] = useState<string[]>([]);
+  const [occupiedIntervals, setOccupiedIntervals] = useState<{start: string, end: string}[]>([]);
   const [formData, setFormData] = useState({ name: '', phone: '' });
   const [loading, setLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
@@ -50,8 +50,8 @@ function BookingContent() {
           const formattedDate = selectedDate!.toISOString().split('T')[0];
           const res = await fetch(`/api/availability?date=${formattedDate}`);
           const data = await res.json();
-          if (data.occupiedSlots) {
-            setOccupiedSlots(data.occupiedSlots);
+          if (data.occupiedIntervals) {
+            setOccupiedIntervals(data.occupiedIntervals);
           }
         } catch (err) {
           console.error('Failed to fetch availability:', err);
@@ -70,6 +70,26 @@ function BookingContent() {
       if (exists) return prev.filter(s => s.id !== service.id);
       return [...prev, service];
     });
+  };
+
+  const isSlotAvailable = (time: string) => {
+    const timeToMinutes = (t: string) => {
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
+    };
+
+    const newStart = timeToMinutes(time);
+    const newEnd = newStart + totalDuration;
+
+    for (const interval of occupiedIntervals) {
+      const extStart = timeToMinutes(interval.start);
+      const extEnd = timeToMinutes(interval.end);
+
+      if (newStart < extEnd && newEnd > extStart) {
+        return false;
+      }
+    }
+    return true;
   };
 
   const formatPhone = (value: string) => {
@@ -254,15 +274,15 @@ function BookingContent() {
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                     {['10:00', '11:00', '12:00', '13:00', '14:30', '15:30', '17:00', '18:30', '19:30', '21:00'].map(time => {
                       const isSelected = selectedTime === time;
-                      const isOccupied = occupiedSlots.includes(time);
+                      const isAvailable = isSlotAvailable(time);
                       return (
                         <button
                           key={time}
-                          disabled={isOccupied}
+                          disabled={!isAvailable}
                           onClick={() => setSelectedTime(time)}
                           className={`py-5 rounded-2xl border font-black text-sm transition-all duration-300 ${
                             isSelected ? 'border-primary bg-primary text-white shadow-lg shadow-primary/20' : 
-                            isOccupied ? 'border-zinc-50 bg-zinc-50 text-zinc-200 cursor-not-allowed opacity-50' :
+                            !isAvailable ? 'border-zinc-50 bg-zinc-50 text-zinc-200 cursor-not-allowed opacity-50' :
                             'border-white bg-white hover:border-zinc-200 shadow-sm'
                           }`}
                         >
