@@ -12,18 +12,19 @@ export async function GET(req: Request) {
   try {
     const { data: appointments, error } = await supabaseAdmin
       .from('appointments')
-      .select('start_time')
+      .select('start_time, end_time')
       .eq('date', date)
       .eq('status', 'active');
 
     if (error) throw error;
 
-    const occupiedSlots = appointments.map(app => {
-      // Преобразуем "10:00:00" в "10:00"
-      return app.start_time.substring(0, 5);
-    });
+    // Возвращаем массив интервалов [{start: '10:00', end: '11:30'}, ...]
+    const occupiedIntervals = appointments.map(app => ({
+      start: app.start_time.substring(0, 5),
+      end: app.end_time.substring(0, 5)
+    }));
 
-    return NextResponse.json({ occupiedSlots });
+    return NextResponse.json({ occupiedIntervals });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

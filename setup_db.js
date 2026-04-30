@@ -1,7 +1,7 @@
 const { Client } = require('pg');
 
 // Используем Transaction Pooler (порт 6543) для совместимости с IPv4
-const connectionString = 'postgresql://postgres.lrnajodxfwegimnwnbdd:Uvbuuvbu4366%40@aws-0-eu-central-1.pooler.supabase.co:6543/postgres';
+const connectionString = 'postgresql://postgres:Uvbuuvbu4366%40@db.lrnajodxfwegimnwnbdd.supabase.co:5432/postgres';
 
 const client = new Client({
   connectionString,
@@ -20,35 +20,13 @@ const sql = `
     created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
   );
 
-  -- Включаем Row Level Security
-  ALTER TABLE services ENABLE ROW LEVEL SECURITY;
-
-  -- Разрешаем всем читать услуги
-  DROP POLICY IF EXISTS "Allow public read" ON services;
-  CREATE POLICY "Allow public read" ON services FOR SELECT USING (true);
-  
-  -- Разрешаем всё делать админу
-  DROP POLICY IF EXISTS "Allow admin all" ON services;
-  CREATE POLICY "Allow admin all" ON services FOR ALL USING (true);
-
-  -- Таблица профилей
-  CREATE TABLE IF NOT EXISTS profiles (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    phone TEXT UNIQUE NOT NULL,
-    name TEXT,
-    role TEXT DEFAULT 'client',
-    telegram_chat_id TEXT,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-  );
-
-  -- Настройка RLS для профилей
-  ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-
-  DROP POLICY IF EXISTS "Allow public read profiles" ON profiles;
-  CREATE POLICY "Allow public read profiles" ON profiles FOR SELECT USING (true);
-
-  DROP POLICY IF EXISTS "Allow service role all" ON profiles;
-  CREATE POLICY "Allow service role all" ON profiles FOR ALL USING (true);
+  -- Включаем Row Level Security (но пока отключаем для простоты разработки)
+  ALTER TABLE services DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE appointments DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE appointment_services DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE schedule_rules DISABLE ROW LEVEL SECURITY;
+  ALTER TABLE schedule_exceptions DISABLE ROW LEVEL SECURITY;
 
   -- Таблица записей
   CREATE TABLE IF NOT EXISTS appointments (

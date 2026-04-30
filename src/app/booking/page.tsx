@@ -48,7 +48,7 @@ function BookingContent() {
       async function checkAvailability() {
         try {
           const formattedDate = selectedDate!.toISOString().split('T')[0];
-          const res = await fetch(`/api/availability?date=${formattedDate}`);
+          const res = await fetch(`/api/availability?date=${formattedDate}`, { cache: 'no-store' });
           const data = await res.json();
           if (data.occupiedIntervals) {
             setOccupiedIntervals(data.occupiedIntervals);

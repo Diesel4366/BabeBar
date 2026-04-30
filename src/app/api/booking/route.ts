@@ -10,18 +10,31 @@ export async function POST(req: Request) {
     }
 
     const formattedDate = date.split('T')[0];
+    
+    // Вычисляем end_time новой записи
+    const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
+    const [h, m] = time.split(':').map(Number);
+    const newStartMins = h * 60 + m;
+    const newEndMins = newStartMins + totalDuration;
 
-    // 0. Проверка на существующую запись на это время
-    const { data: existingAppointment } = await supabaseAdmin
+    // 0. Проверка на пересечение интервалов
+    const { data: existingApps } = await supabaseAdmin
       .from('appointments')
-      .select('id')
+      .select('start_time, end_time')
       .eq('date', formattedDate)
-      .eq('start_time', time)
-      .eq('status', 'active')
-      .maybeSingle();
+      .eq('status', 'active');
 
-    if (existingAppointment) {
-      return NextResponse.json({ error: 'Это время уже занято' }, { status: 400 });
+    if (existingApps) {
+      for (const app of existingApps) {
+        const [sh, sm] = app.start_time.split(':').map(Number);
+        const [eh, em] = app.end_time.split(':').map(Number);
+        const extStartMins = sh * 60 + sm;
+        const extEndMins = eh * 60 + em;
+
+        if (newStartMins < extEndMins && newEndMins > extStartMins) {
+          return NextResponse.json({ error: 'Это время перекрывается другой записью' }, { status: 400 });
+        }
+      }
     }
 
     // 1. Находим или создаем профиль
