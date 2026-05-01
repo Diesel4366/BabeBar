@@ -65,7 +65,6 @@ export async function POST(req: Request) {
     // 2. Создаем запись
     const startTime = time;
     // Вычисляем end_time (упрощенно: начало + сумма длительностей)
-    const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
     const [hours, minutes] = startTime.split(':').map(Number);
     const endDate = new Date();
     endDate.setHours(hours, minutes + totalDuration);
