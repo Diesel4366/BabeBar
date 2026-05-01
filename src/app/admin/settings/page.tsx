@@ -89,11 +89,11 @@ export default function AdminSettings() {
                     <button
                       onClick={() => updateRule(rule.id, 'is_working', !rule.is_working)}
                       style={{ backgroundColor: rule.is_working ? '#D14D72' : '#E4E4E7' }}
-                      className="relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+                      className="relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0 overflow-hidden p-0 border-0"
                     >
                       <span
                         className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
-                        style={{ transform: rule.is_working ? 'translateX(28px)' : 'translateX(4px)' }}
+                        style={{ left: rule.is_working ? '28px' : '4px' }}
                       />
                     </button>
                     <span className="font-black text-sm uppercase tracking-tight">

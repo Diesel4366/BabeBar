@@ -292,11 +292,11 @@ export default function AdminServices() {
                     type="button"
                     onClick={() => setForm({ ...form, is_active: !form.is_active })}
                     style={{ backgroundColor: form.is_active ? '#D14D72' : '#E4E4E7' }}
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 overflow-hidden p-0 border-0"
                   >
                     <span
-                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
-                      style={{ transform: form.is_active ? 'translateX(22px)' : 'translateX(4px)' }}
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300"
+                      style={{ left: form.is_active ? '22px' : '4px' }}
                     />
                   </button>
                   <span className="font-bold text-sm">Активна (показывается на сайте)</span>
@@ -307,11 +307,11 @@ export default function AdminServices() {
                     type="button"
                     onClick={() => setForm({ ...form, is_addon: !form.is_addon, addon_for_category: !form.is_addon ? form.category : null })}
                     style={{ backgroundColor: form.is_addon ? '#D14D72' : '#E4E4E7' }}
-                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0 overflow-hidden p-0 border-0"
                   >
                     <span
-                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
-                      style={{ transform: form.is_addon ? 'translateX(22px)' : 'translateX(4px)' }}
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-all duration-300"
+                      style={{ left: form.is_addon ? '22px' : '4px' }}
                     />
                   </button>
                   <span className="font-bold text-sm">Дополнительная услуга</span>
