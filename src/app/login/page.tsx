@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { verifyUserToken } from '@/lib/userAuth';
 import { redirect } from 'next/navigation';
+import { TelegramButton } from './components/TelegramButton';
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
   const store = await cookies();
@@ -14,8 +15,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
   const sp = await props.searchParams;
   const hasError = !!sp.error;
 
-  const clientId = process.env.TELEGRAM_CLIENT_ID;
-  const telegramAuthUrl = `https://oauth.telegram.org/auth?bot_id=${clientId}&scope=users:read&origin=https://babebar.ru&return_to=https://babebar.ru/api/auth/telegram/callback`;
+  const botUsername = process.env.TELEGRAM_BOT_USERNAME ?? '';
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center p-6">
@@ -36,16 +36,13 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
         )}
 
         <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-8 space-y-6">
-          <a
-            href={telegramAuthUrl}
-            className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:opacity-90 active:scale-95"
-            style={{ backgroundColor: '#2AABEE' }}
-          >
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="white">
-              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.248l-2.012 9.483c-.145.658-.537.818-1.084.508l-3-2.21-1.447 1.394c-.16.16-.295.295-.605.295l.213-3.053 5.56-5.023c.242-.213-.054-.333-.373-.12L6.48 14.51l-2.95-.924c-.642-.2-.654-.642.136-.953l11.527-4.445c.535-.194 1.003.13.37.06z"/>
-            </svg>
-            Войти через Telegram
-          </a>
+          {botUsername ? (
+            <TelegramButton botUsername={botUsername} />
+          ) : (
+            <div className="text-center text-xs text-zinc-400 font-bold py-4">
+              TELEGRAM_BOT_USERNAME не задан в env
+            </div>
+          )}
 
           <div className="relative">
             <span className="absolute inset-x-0 top-1/2 h-px bg-zinc-100" />
