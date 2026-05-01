@@ -88,14 +88,12 @@ export default function AdminSettings() {
                   <div className="flex items-center gap-4 min-w-[160px]">
                     <button
                       onClick={() => updateRule(rule.id, 'is_working', !rule.is_working)}
-                      className={`relative w-12 h-6 rounded-full transition-colors duration-300 flex-shrink-0 ${
-                        rule.is_working ? 'bg-primary' : 'bg-zinc-200'
-                      }`}
+                      style={{ backgroundColor: rule.is_working ? '#D14D72' : '#E4E4E7' }}
+                      className="relative w-12 h-6 rounded-full transition-all duration-300 flex-shrink-0"
                     >
                       <span
-                        className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-300 ${
-                          rule.is_working ? 'translate-x-7' : 'translate-x-1'
-                        }`}
+                        className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
+                        style={{ transform: rule.is_working ? 'translateX(28px)' : 'translateX(4px)' }}
                       />
                     </button>
                     <span className="font-black text-sm uppercase tracking-tight">

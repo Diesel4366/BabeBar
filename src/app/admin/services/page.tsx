@@ -268,15 +268,36 @@ export default function AdminServices() {
                 />
               </div>
 
+              {/* Image URL */}
+              <div>
+                <label className="text-[10px] font-black uppercase tracking-widest text-zinc-400 block mb-2">Фото (URL)</label>
+                <input
+                  type="url"
+                  value={form.image_url ?? ''}
+                  onChange={e => setForm({ ...form, image_url: e.target.value || null })}
+                  className="w-full bg-[#FAFAFA] border border-zinc-100 rounded-2xl px-5 py-4 font-bold text-sm outline-none"
+                  placeholder="https://..."
+                />
+                {form.image_url && (
+                  <div className="mt-3 relative h-32 rounded-2xl overflow-hidden bg-zinc-100">
+                    <img src={form.image_url} alt="preview" className="w-full h-full object-cover" />
+                  </div>
+                )}
+              </div>
+
               {/* Toggles */}
               <div className="space-y-4">
                 <label className="flex items-center gap-4 cursor-pointer">
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, is_active: !form.is_active })}
-                    className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${form.is_active ? 'bg-primary' : 'bg-zinc-200'}`}
+                    style={{ backgroundColor: form.is_active ? '#D14D72' : '#E4E4E7' }}
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.is_active ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <span
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
+                      style={{ transform: form.is_active ? 'translateX(22px)' : 'translateX(4px)' }}
+                    />
                   </button>
                   <span className="font-bold text-sm">Активна (показывается на сайте)</span>
                 </label>
@@ -285,9 +306,13 @@ export default function AdminServices() {
                   <button
                     type="button"
                     onClick={() => setForm({ ...form, is_addon: !form.is_addon, addon_for_category: !form.is_addon ? form.category : null })}
-                    className={`relative w-11 h-6 rounded-full transition-colors flex-shrink-0 ${form.is_addon ? 'bg-primary' : 'bg-zinc-200'}`}
+                    style={{ backgroundColor: form.is_addon ? '#D14D72' : '#E4E4E7' }}
+                    className="relative w-11 h-6 rounded-full transition-all duration-300 flex-shrink-0"
                   >
-                    <span className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform ${form.is_addon ? 'translate-x-6' : 'translate-x-1'}`} />
+                    <span
+                      className="absolute top-1 w-4 h-4 bg-white rounded-full shadow-sm transition-transform duration-300"
+                      style={{ transform: form.is_addon ? 'translateX(22px)' : 'translateX(4px)' }}
+                    />
                   </button>
                   <span className="font-bold text-sm">Дополнительная услуга</span>
                 </label>
