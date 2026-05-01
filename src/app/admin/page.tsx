@@ -23,7 +23,7 @@ async function getStats() {
         .from('appointments')
         .select('total_price')
         .gte('date', monthStart)
-        .in('status', ['active', 'completed']),
+        .eq('status', 'completed'),
     ]);
 
     const monthRevenue = revenueRes.data?.reduce((sum, a) => sum + (a.total_price || 0), 0) ?? 0;
