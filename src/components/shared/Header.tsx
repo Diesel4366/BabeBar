@@ -49,8 +49,9 @@ export const Header = () => {
         </nav>
 
         {/* Mobile Toggle */}
-        <button 
+        <button
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          aria-label={isMobileMenuOpen ? 'Закрыть меню' : 'Открыть меню'}
           className="md:hidden relative z-[110] p-2 text-[#0A0A0A] hover:bg-zinc-100 rounded-full transition-colors"
         >
           {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}

@@ -5,8 +5,16 @@ import { Header } from '@/components/shared/Header';
 import { BookingCTA } from '@/components/client/BookingCTA';
 import { Advantages } from '@/components/client/Advantages';
 import { SITE_CONFIG } from '@/lib/config';
-import { Camera, MapPin, Phone } from 'lucide-react';
+import { MapPin, Phone, Camera } from 'lucide-react';
+import Image from 'next/image';
 import Link from 'next/link';
+
+const galleryImages = [
+  { src: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=600&q=80', alt: 'Работа мастера — наращивание ресниц' },
+  { src: 'https://images.unsplash.com/photo-1596178065887-1198b6148b2b?auto=format&fit=crop&w=600&q=80', alt: 'Работа мастера — макияж' },
+  { src: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?auto=format&fit=crop&w=600&q=80', alt: 'Работа мастера — уход за кожей' },
+  { src: 'https://images.unsplash.com/photo-1600948836101-f9ffda59d250?auto=format&fit=crop&w=600&q=80', alt: 'Работа мастера — оформление бровей' },
+];
 
 export default async function Home() {
   const { data: services } = await supabaseAdmin
@@ -34,35 +42,27 @@ export default async function Home() {
           </div>
           
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { id: 1, url: SITE_CONFIG.instagramUrl },
-              { id: 2, url: SITE_CONFIG.instagramUrl },
-              { id: 3, url: SITE_CONFIG.instagramUrl },
-              { id: 4, url: SITE_CONFIG.instagramUrl },
-            ].map((item) => (
-              <Link 
-                key={item.id} 
-                href={item.url}
+            {galleryImages.map((item, i) => (
+              <Link
+                key={i}
+                href={SITE_CONFIG.instagramUrl}
                 target="_blank"
-                className="aspect-[3/4] bg-white rounded-[2rem] border border-zinc-100 flex items-center justify-center group overflow-hidden relative"
+                aria-label={item.alt}
+                className="aspect-[3/4] rounded-[2rem] overflow-hidden relative group"
               >
-                <div className="absolute inset-0 bg-zinc-200 animate-pulse group-hover:scale-110 transition-transform duration-700" />
+                <Image
+                  src={item.src}
+                  alt={item.alt}
+                  fill
+                  className="object-cover group-hover:scale-110 transition-transform duration-700"
+                  sizes="(max-width: 768px) 50vw, 25vw"
+                />
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3">
-                  <svg 
-                    width="32" 
-                    height="32" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="white" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  >
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/>
                   </svg>
-                  <span className="text-white text-[10px] font-bold uppercase tracking-widest">Смотреть</span>
+                  <span className="text-white text-[10px] font-bold uppercase tracking-widest">В Instagram</span>
                 </div>
-                <Camera size={32} className="text-zinc-300 group-hover:opacity-0 transition-opacity relative z-10" />
               </Link>
             ))}
           </div>
@@ -130,12 +130,15 @@ export default async function Home() {
             BABE<span className="text-primary italic">BAR</span>
           </div>
           <div className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.3em]">
-            &copy; {new Date().getFullYear()} Modern Beauty Studio
+            &copy; {new Date().getFullYear()} {SITE_CONFIG.masterName}
           </div>
-          <div className="flex gap-8 text-[10px] font-black uppercase tracking-widest text-zinc-400">
-            <Link href="#" className="hover:text-[#0A0A0A] transition-colors">Privacy</Link>
-            <Link href="#" className="hover:text-[#0A0A0A] transition-colors">Terms</Link>
-          </div>
+          <Link
+            href={SITE_CONFIG.instagramUrl}
+            target="_blank"
+            className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors"
+          >
+            {SITE_CONFIG.instagram}
+          </Link>
         </div>
       </footer>
     </main>

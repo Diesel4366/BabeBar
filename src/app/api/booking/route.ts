@@ -1,9 +1,13 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { Service } from '@/types';
 
 export async function POST(req: Request) {
   try {
-    const { name, phone, date, time, services, totalPrice } = await req.json();
+    const { name, phone, date, time, services, totalPrice }: {
+      name: string; phone: string; date: string; time: string;
+      services: Service[]; totalPrice: number;
+    } = await req.json();
 
     if (!name || !phone || !date || !time || !services || services.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -12,7 +16,7 @@ export async function POST(req: Request) {
     const formattedDate = date.split('T')[0];
     
     // Вычисляем end_time новой записи
-    const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
+    const totalDuration = services.reduce((sum: number, s: Service) => sum + s.duration_minutes, 0);
     const [h, m] = time.split(':').map(Number);
     const newStartMins = h * 60 + m;
     const newEndMins = newStartMins + totalDuration;
@@ -86,7 +90,7 @@ export async function POST(req: Request) {
     if (appError || !appointment) throw appError || new Error('Failed to create appointment');
 
     // 3. Привязываем услуги
-    const appointmentServices = services.map((s: any) => ({
+    const appointmentServices = services.map((s: Service) => ({
       appointment_id: appointment.id,
       service_id: s.id
     }));
@@ -123,8 +127,8 @@ export async function POST(req: Request) {
             parse_mode: 'Markdown'
           })
         });
-      } catch (tgError) {
-        console.error('Telegram notification error:', tgError);
+      } catch {
+        // уведомление опционально, ошибка не критична
       }
     }
 

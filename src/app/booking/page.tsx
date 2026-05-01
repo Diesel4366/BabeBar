@@ -23,6 +23,7 @@ function BookingContent() {
   const [loading, setLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [success, setSuccess] = useState(false);
+  const [bookingError, setBookingError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadData() {
@@ -111,12 +112,13 @@ function BookingContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setBookingError(null);
     if (formData.phone.length < 18) {
-      alert('Пожалуйста, введите полный номер телефона');
+      setBookingError('Пожалуйста, введите полный номер телефона');
       return;
     }
     setLoading(true);
-    
+
     try {
       const response = await fetch('/api/booking', {
         method: 'POST',
@@ -135,10 +137,10 @@ function BookingContent() {
       if (data.success) {
         setSuccess(true);
       } else {
-        alert('Ошибка при записи: ' + data.error);
+        setBookingError(data.error || 'Ошибка при создании записи');
       }
-    } catch (error) {
-      alert('Произошла ошибка при соединении с сервером');
+    } catch {
+      setBookingError('Ошибка соединения с сервером. Попробуйте ещё раз.');
     } finally {
       setLoading(false);
     }
@@ -175,8 +177,9 @@ function BookingContent() {
       <header className="bg-white border-b border-zinc-100 py-6 px-6 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
-            <button 
-              onClick={() => step > 1 ? setStep(step - 1) : router.push('/')}
+            <button
+              onClick={() => { setBookingError(null); step > 1 ? setStep(step - 1) : router.push('/'); }}
+              aria-label="Назад"
               className="w-10 h-10 flex items-center justify-center hover:bg-zinc-50 rounded-full transition-colors border border-zinc-100"
             >
               <ChevronLeft size={20} />
@@ -280,11 +283,14 @@ function BookingContent() {
                     <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                       {(() => {
                         const times: string[] = [];
-                        const [startH] = workingHours.start.split(':').map(Number);
-                        const [endH] = workingHours.end.split(':').map(Number);
-                        for (let hour = startH; hour < endH; hour++) {
-                          times.push(`${hour}:00`);
-                          times.push(`${hour}:30`);
+                        const [startH, startM] = workingHours.start.split(':').map(Number);
+                        const [endH, endM] = workingHours.end.split(':').map(Number);
+                        const startMins = startH * 60 + startM;
+                        const endMins = endH * 60 + endM;
+                        for (let mins = startMins; mins < endMins; mins += 30) {
+                          const h = Math.floor(mins / 60);
+                          const m = mins % 60;
+                          times.push(`${h}:${String(m).padStart(2, '0')}`);
                         }
                         return times.map(time => {
                           const isSelected = selectedTime === time;
@@ -363,6 +369,11 @@ function BookingContent() {
                     </div>
                   </div>
 
+                  {bookingError && (
+                    <div className="bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold px-5 py-4 rounded-2xl text-center">
+                      {bookingError}
+                    </div>
+                  )}
                   <button
                     disabled={loading || !formData.name || !formData.phone}
                     type="submit"
@@ -387,7 +398,7 @@ function BookingContent() {
             </div>
             <button
               disabled={step === 1 ? selectedServices.length === 0 : !selectedDate || !selectedTime}
-              onClick={() => setStep(step + 1)}
+              onClick={() => { setBookingError(null); setStep(step + 1); }}
               className="btn-primary flex-1 py-5 text-[10px]"
             >
               {step === 1 ? 'ВЫБРАТЬ ВРЕМЯ' : 'ДАЛЕЕ'}
