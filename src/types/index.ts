@@ -15,6 +15,7 @@ export type Service = {
   duration_minutes: number;
   image_url: string | null;
   is_active: boolean;
+  category: string;
   created_at: string;
 };
 
