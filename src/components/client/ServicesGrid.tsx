@@ -3,10 +3,10 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Service } from '@/types';
+import { CATEGORY_ORDER } from '@/lib/config';
 import { Clock, Star, ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
-const CATEGORY_ORDER = ['Ресницы', 'Брови', 'Макияж', 'Прочее'];
 const INITIAL_SHOW = 6;
 
 interface ServicesGridProps {
@@ -15,7 +15,7 @@ interface ServicesGridProps {
 
 export const ServicesGrid: React.FC<ServicesGridProps> = ({ services }) => {
   const router = useRouter();
-  const activeServices = services.filter(s => s.is_active);
+  const activeServices = services.filter(s => s.is_active && !s.is_addon);
 
   const categories = CATEGORY_ORDER.filter(cat =>
     activeServices.some(s => s.category === cat)

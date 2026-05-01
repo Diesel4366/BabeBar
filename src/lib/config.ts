@@ -8,3 +8,5 @@ export const SITE_CONFIG = {
   defaultWorkStart: '10:00',
   defaultWorkEnd:   '21:00',
 };
+
+export const CATEGORY_ORDER = ['Ресницы', 'Брови', 'Макияж', 'Прочее'];

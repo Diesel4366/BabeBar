@@ -16,6 +16,8 @@ export type Service = {
   image_url: string | null;
   is_active: boolean;
   category: string;
+  is_addon: boolean;
+  addon_for_category: string | null;
   created_at: string;
 };
 
