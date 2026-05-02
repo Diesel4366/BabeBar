@@ -2,6 +2,28 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyTelegramAuth, createUserToken, exchangeTelegramCode } from '@/lib/userAuth';
 
+async function fetchBotApiPhoto(telegramId: string): Promise<string | null> {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN;
+  if (!botToken) return null;
+  try {
+    const r1 = await fetch(
+      `https://api.telegram.org/bot${botToken}/getUserProfilePhotos?user_id=${telegramId}&limit=1`
+    );
+    const d1 = await r1.json();
+    if (!d1.ok || !d1.result?.photos?.[0]?.length) return null;
+    const sizes = d1.result.photos[0];
+    const fileId = sizes[sizes.length - 1].file_id;
+    const r2 = await fetch(
+      `https://api.telegram.org/bot${botToken}/getFile?file_id=${fileId}`
+    );
+    const d2 = await r2.json();
+    if (!d2.ok || !d2.result?.file_path) return null;
+    return `https://api.telegram.org/file/bot${botToken}/${d2.result.file_path}`;
+  } catch {
+    return null;
+  }
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const origin = url.origin;
@@ -18,11 +40,12 @@ export async function GET(req: Request) {
   if (code) {
     const userData = await exchangeTelegramCode(code);
     if (!userData) return fail('Code exchange failed');
+    const photoUrl = userData.photo_url || await fetchBotApiPhoto(userData.id) || '';
     tgData = {
       id: userData.id,
       first_name: userData.first_name,
       username: userData.username || '',
-      photo_url: userData.photo_url || '',
+      photo_url: photoUrl,
     };
   } else {
     // 2. СТАРЫЙ МЕТОД (Widget)

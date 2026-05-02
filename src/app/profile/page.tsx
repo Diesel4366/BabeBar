@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Calendar, Clock, LogOut, Settings, X } from 'lucide-react';
+import { ChevronLeft, Calendar, Clock, LogOut, Settings, X, Sparkles } from 'lucide-react';
 
 interface AppointmentService {
   services: { name: string; price: number; duration_minutes: number } | null;
@@ -25,6 +25,7 @@ interface User {
   telegram_id: number | null;
   telegram_username: string | null;
   telegram_photo: string | null;
+  created_at: string | null;
   isAdmin: boolean;
 }
 
@@ -34,6 +35,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
   cancelled_by_client: { label: 'Отменено вами', color: '#A1A1AA' },
   cancelled_by_admin: { label: 'Отменено мастером', color: '#A1A1AA' },
 };
+
+function formatMemberSince(dateStr: string): string {
+  return new Date(dateStr).toLocaleDateString('ru-RU', { month: 'long', year: 'numeric' });
+}
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -75,6 +80,8 @@ export default function ProfilePage() {
 
   const upcoming = appointments.filter(a => a.status === 'active');
   const past = appointments.filter(a => a.status !== 'active');
+  const completed = appointments.filter(a => a.status === 'completed');
+  const totalSpent = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
 
   if (loading) {
     return (
@@ -103,29 +110,63 @@ export default function ProfilePage() {
       <div className="max-w-xl mx-auto px-6 py-8 space-y-8">
 
         {/* User card */}
-        <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-8 flex items-center gap-6">
-          {user?.telegram_photo ? (
-            <img src={user.telegram_photo} alt="" className="w-16 h-16 rounded-full object-cover flex-shrink-0" />
-          ) : (
-            <div className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-black flex-shrink-0" style={{ backgroundColor: '#D14D72' }}>
+        <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-8 space-y-6">
+          <div className="flex items-center gap-5">
+            {user?.telegram_photo ? (
+              <img
+                src={user.telegram_photo}
+                alt=""
+                className="w-16 h-16 rounded-full object-cover flex-shrink-0 ring-2 ring-[#D14D72]"
+                style={{}}
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = 'none';
+                  (e.currentTarget.nextElementSibling as HTMLElement | null)?.style.setProperty('display', 'flex');
+                }}
+              />
+            ) : null}
+            <div
+              className="w-16 h-16 rounded-full items-center justify-center text-white text-2xl font-black flex-shrink-0"
+              style={{
+                backgroundColor: '#D14D72',
+                display: user?.telegram_photo ? 'none' : 'flex',
+              }}
+            >
               {user?.name?.[0]?.toUpperCase() ?? '?'}
             </div>
-          )}
-          <div className="flex-1 min-w-0">
-            <div className="font-black text-xl uppercase tracking-tight truncate">{user?.name ?? 'Пользователь'}</div>
-            {user?.telegram_username && (
-              <div className="text-zinc-400 font-medium text-sm">@{user.telegram_username}</div>
+            <div className="flex-1 min-w-0">
+              <div className="font-black text-xl uppercase tracking-tight truncate">{user?.name ?? 'Пользователь'}</div>
+              {user?.telegram_username && (
+                <div className="text-zinc-400 font-medium text-sm">@{user.telegram_username}</div>
+              )}
+            </div>
+            {user?.isAdmin && (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-100 hover:border-zinc-200 text-zinc-500 hover:text-zinc-700 transition-all"
+              >
+                <Settings size={14} />
+                Админ
+              </Link>
             )}
           </div>
-          {user?.isAdmin && (
-            <Link
-              href="/admin"
-              className="flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-100 hover:border-zinc-200 text-zinc-500 hover:text-zinc-700 transition-all"
-            >
-              <Settings size={14} />
-              Админ
-            </Link>
-          )}
+
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-4 pt-2 border-t border-zinc-50">
+            <div className="text-center">
+              <div className="text-2xl font-black">{completed.length}</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">Визитов</div>
+            </div>
+            <div className="text-center border-x border-zinc-100">
+              <div className="text-2xl font-black">{totalSpent > 0 ? `${totalSpent.toLocaleString('ru-RU')}` : '—'}</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">{totalSpent > 0 ? 'Потрачено ₽' : 'Ждём вас'}</div>
+            </div>
+            <div className="text-center">
+              <div className="text-sm font-black leading-tight mt-1">
+                {user?.created_at ? formatMemberSince(user.created_at) : '—'}
+              </div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">С нами с</div>
+            </div>
+          </div>
         </div>
 
         {/* Upcoming */}
@@ -134,15 +175,22 @@ export default function ProfilePage() {
             Предстоящие записи {upcoming.length > 0 && `(${upcoming.length})`}
           </div>
           {upcoming.length === 0 ? (
-            <div className="bg-white rounded-[2rem] border border-zinc-100 p-8 text-center">
+            <div className="bg-white rounded-[2rem] border border-zinc-100 p-8 text-center space-y-4">
               <p className="text-zinc-400 font-bold text-sm uppercase tracking-widest">Нет предстоящих записей</p>
-              <Link href="/booking" className="mt-4 inline-block text-xs font-black uppercase tracking-widest py-3 px-6 rounded-2xl text-white transition-all" style={{ backgroundColor: '#D14D72' }}>
+              <Link href="/booking" className="inline-block text-xs font-black uppercase tracking-widest py-3 px-6 rounded-2xl text-white transition-all hover:opacity-90" style={{ backgroundColor: '#D14D72' }}>
                 Записаться
               </Link>
             </div>
           ) : (
             <div className="space-y-3">
-              {upcoming.map(a => <AppointmentCard key={a.id} appt={a} onCancel={() => setCancelId(a.id)} />)}
+              {upcoming.map((a, i) => (
+                <AppointmentCard
+                  key={a.id}
+                  appt={a}
+                  isNext={i === 0}
+                  onCancel={() => setCancelId(a.id)}
+                />
+              ))}
             </div>
           )}
         </section>
@@ -152,7 +200,7 @@ export default function ProfilePage() {
           <section>
             <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">История</div>
             <div className="space-y-3">
-              {past.map(a => <AppointmentCard key={a.id} appt={a} />)}
+              {past.map(a => <AppointmentCard key={a.id} appt={a} showBookAgain />)}
             </div>
           </section>
         )}
@@ -198,7 +246,17 @@ export default function ProfilePage() {
   );
 }
 
-function AppointmentCard({ appt, onCancel }: { appt: Appointment; onCancel?: () => void }) {
+function AppointmentCard({
+  appt,
+  isNext = false,
+  showBookAgain = false,
+  onCancel,
+}: {
+  appt: Appointment;
+  isNext?: boolean;
+  showBookAgain?: boolean;
+  onCancel?: () => void;
+}) {
   const st = STATUS_LABELS[appt.status];
   const services = appt.appointment_services
     .map(s => s.services?.name)
@@ -210,7 +268,19 @@ function AppointmentCard({ appt, onCancel }: { appt: Appointment; onCancel?: () 
   });
 
   return (
-    <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-6 space-y-4">
+    <div
+      className="bg-white rounded-[2rem] shadow-sm p-6 space-y-4"
+      style={{
+        border: isNext ? '1.5px solid #D14D72' : '1px solid #F4F4F5',
+      }}
+    >
+      {isNext && (
+        <div className="flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest" style={{ color: '#D14D72' }}>
+          <Sparkles size={11} />
+          Ближайший визит
+        </div>
+      )}
+
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <div className="flex items-center gap-2 text-sm font-black uppercase tracking-tight">
@@ -236,14 +306,25 @@ function AppointmentCard({ appt, onCancel }: { appt: Appointment; onCancel?: () 
 
       <div className="flex items-center justify-between pt-2 border-t border-zinc-50">
         <span className="text-lg font-black">{appt.total_price} ₽</span>
-        {appt.status === 'active' && onCancel && (
-          <button
-            onClick={onCancel}
-            className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 transition-colors"
-          >
-            Отменить
-          </button>
-        )}
+        <div className="flex items-center gap-4">
+          {showBookAgain && (
+            <Link
+              href="/booking"
+              className="text-[10px] font-black uppercase tracking-widest transition-colors hover:opacity-70"
+              style={{ color: '#D14D72' }}
+            >
+              Записаться снова
+            </Link>
+          )}
+          {appt.status === 'active' && onCancel && (
+            <button
+              onClick={onCancel}
+              className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 transition-colors"
+            >
+              Отменить
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
