@@ -118,7 +118,7 @@ export async function POST(req: Request) {
     const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
 
     if (telegramToken && chatIds.length > 0) {
-      const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('ru-RU', {
+      const dateFormatted = new Date(formattedDate + 'T12:00:00').toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'long', weekday: 'long',
       });
       const message = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${services.map((s: Service) => s.name).join(', ')}\n💰 *Сумма:* ${totalPrice} ₽`;
