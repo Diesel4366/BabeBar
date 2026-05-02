@@ -83,6 +83,7 @@ export default function ProfilePage() {
   const upcoming = appointments.filter(a => a.status === 'active');
   const past = appointments.filter(a => a.status !== 'active');
   const completed = appointments.filter(a => a.status === 'completed');
+  const allVisits = appointments.filter(a => !a.status.startsWith('cancelled'));
   const totalSpent = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
 
   if (loading) {
@@ -150,11 +151,13 @@ export default function ProfilePage() {
           {/* Stats */}
           <div className="grid grid-cols-3 gap-4 pt-2 border-t border-zinc-50">
             <div className="text-center">
-              <div className="text-2xl font-black">{completed.length}</div>
-              <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">Визитов</div>
+              <div className="text-2xl font-black">{allVisits.length}</div>
+              <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">
+                {allVisits.length === 1 ? 'Запись' : 'Записей'}
+              </div>
             </div>
             <div className="text-center border-x border-zinc-100">
-              <div className="text-2xl font-black">{totalSpent > 0 ? `${totalSpent.toLocaleString('ru-RU')}` : '—'}</div>
+              <div className="text-2xl font-black">{totalSpent > 0 ? totalSpent.toLocaleString('ru-RU') : '—'}</div>
               <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mt-0.5">{totalSpent > 0 ? 'Потрачено ₽' : 'Ждём вас'}</div>
             </div>
             <div className="text-center">
