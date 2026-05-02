@@ -128,7 +128,7 @@ async function handleMyAppointments(chatId: number, telegramId: number | undefin
 
   const lines = appts.map(a => {
     const dateStr = format(new Date(a.date + 'T12:00:00'), 'eeee, d MMMM', { locale: ru });
-    const svcNames = (a.appointment_services as { services: { name: string } | null }[])
+    const svcNames = (a.appointment_services as unknown as { services: { name: string } | null }[])
       .map(s => s.services?.name).filter(Boolean).join(', ');
     return `📅 *${dateStr}*\n⏰ ${a.start_time.substring(0, 5)} — ${a.end_time.substring(0, 5)}\n💅 ${svcNames}\n💰 ${a.total_price} ₽`;
   }).join('\n\n');
