@@ -18,9 +18,13 @@ import { ru } from 'date-fns/locale';
 
 async function getDashboardData() {
   try {
-    // Используем дату по Москве (UTC+3) или локальную серверную
-    const today = format(new Date(), 'yyyy-MM-dd');
-    const monthStart = startOfMonth(new Date()).toISOString();
+    // Принудительно используем Московское время (UTC+3)
+    const now = new Date();
+    const moscowTimeStr = now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
+    const moscowDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
+    
+    const today = format(moscowDate, 'yyyy-MM-dd');
+    const monthStart = startOfMonth(moscowDate).toISOString();
 
     const [todayActiveRes, todayCancelledRes, todayCompletedRes, monthClientsRes, revenueRes, upcomingRes] = await Promise.all([
       // Статусы на сегодня
@@ -84,7 +88,8 @@ async function getDashboardData() {
       newClients: newClientsCount,
       returningClients: returningCount,
       monthRevenue,
-      upcoming: upcomingRes.data as any[] || []
+      upcoming: upcomingRes.data as any[] || [],
+      debugServerTime: moscowTimeStr
     };
   } catch (error) {
     console.error('Dashboard data error:', error);
@@ -93,7 +98,8 @@ async function getDashboardData() {
       newClients: 0, 
       returningClients: 0, 
       monthRevenue: 0, 
-      upcoming: [] 
+      upcoming: [],
+      debugServerTime: new Date().toISOString()
     };
   }
 }
@@ -111,9 +117,14 @@ export default async function AdminDashboard() {
           <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-3">
             Обзор <span className="text-primary italic">бизнеса</span>
           </h1>
-          <p className="text-zinc-400 font-medium uppercase text-[9px] md:text-[10px] tracking-[0.2em]">
-            Статистика и управление на сегодня
-          </p>
+          <div className="flex flex-col gap-1">
+            <p className="text-zinc-400 font-medium uppercase text-[9px] md:text-[10px] tracking-[0.2em]">
+              Статистика и управление на сегодня
+            </p>
+            <p className="text-[8px] font-black uppercase tracking-widest text-primary/50">
+              Сервер (МСК): {data.debugServerTime}
+            </p>
+          </div>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <Link href="/admin/appointments" className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white border border-zinc-100 text-[10px] font-black uppercase tracking-widest hover:border-primary transition-all shadow-sm">
