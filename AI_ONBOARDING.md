@@ -1,38 +1,36 @@
 # 🤖 AI Onboarding: BabeBar Project
 
-Привет! Если ты читаешь это, значит тебе нужно продолжить работу над проектом **BabeBar** (BeautyBook). Вот всё, что тебе нужно знать, чтобы не тратить токены на лишние вопросы.
+Привет! Если ты читаешь это, значит тебе нужно продолжить работу над проектом **BabeBar** (BeautyBook).
 
-## 🎯 Суть проекта
-Это система автоматизации для салона красоты (BabeBar). 
-- **Клиенты** записываются через Telegram-бота.
-- **Админы** управляют услугами и мастерами через веб-интерфейс (Next.js).
-- **Данные** живут в Supabase.
+## 🎯 Текущий статус (02.05.2026)
+Авторизация через Telegram полностью исправлена и работает. Мы перешли со старых виджетов на современный **OpenID Connect (OIDC)**.
 
 ## 🏗 Стек технологий
-- **Framework:** Next.js 15 (App Router, TypeScript)
+- **Framework:** Next.js 16 (App Router, TypeScript)
 - **Database/Auth:** Supabase
-- **Deployment:** Vercel (автодеплой из GitHub)
-- **Bot API:** Telegram Bot API (Webhooks)
+- **Auth Protocol:** Telegram OIDC (Direct Auth) ✅
+- **Deployment:** Vercel
 
 ## 📂 Ключевые файлы
-- `src/lib/supabase.ts` — инициализация клиента базы данных.
-- `src/app/api/telegram/route.ts` — сердце бота (webhook handler).
-- `src/app/admin/services/page.tsx` — управление услугами.
-- `setup_db.js` — скрипт для первичной настройки таблиц в Supabase.
+- `src/lib/userAuth.ts` — логика проверки Telegram Hash и обмена `code` на токен профиля.
+- `src/app/api/auth/telegram/callback/route.ts` — обработчик возврата из Telegram.
+- `src/app/login/page.tsx` — страница входа с прямой ссылкой на OIDC.
+- `src/app/profile/page.tsx` — личный кабинет клиента.
 
-## 🔐 Где лежат ключи?
-Все секреты находятся в `.env.local` (локально) и в настройках Vercel (в облаке).
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `TELEGRAM_TOKEN`
+## 🔐 Переменные окружения (Vercel)
+Для работы авторизации **обязательно** нужны:
+- `TELEGRAM_CLIENT_ID` — (8752821995)
+- `TELEGRAM_CLIENT_SECRET` — секрет из раздела "Direct Auth" в BotFather.
+- `TELEGRAM_TOKEN` — обычный токен бота.
+- `ADMIN_SECRET` — ключ для подписи сессионных кук.
 
-## 🚀 Как продолжить работу?
-1. Проверь статус базы: `node test_connection.js`.
-2. Запусти локально: `npm run dev`.
-3. Бот тестируется через проброс порта (например, ngrok) или напрямую через деплой на Vercel.
+## ⚠️ Важные нюансы
+1. **Telegram ID**: Всегда храни и обрабатывай как **STRING** (в БД это тип `TEXT`). Новые ID слишком длинные для `BIGINT`.
+2. **Кириллица**: При декодировании JWT из Telegram используй UTF-8 (реализовано в `userAuth.ts`).
+3. **Database**: Таблица `profiles` имеет автогенерацию UUID для `id`.
 
 ## 📓 Дополнительная информация
-Более подробные записи, логика бизнес-процессов и история изменений лежат в Obsidian по пути:
-`~/Documents/Obsidian/Мой мир/BabeBar/`
+Все подробности сессий и архитектурные решения лежат в Obsidian:
+`~/Documents/Obsidian/Мой мир/02_Other_Bots/BabeBar/`
 
-Действуй смело, код структурирован!
+Действуй смело, система стабильна!
