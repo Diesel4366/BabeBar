@@ -169,7 +169,7 @@ async function handleMyAppointments(chatId: string | number, telegramId: string 
 
   const { data: appts } = await supabaseAdmin
     .from('appointments')
-    .select('date, start_time, end_time, total_price, appointment_services(services(name))')
+    .select('id, date, start_time, end_time, total_price, appointment_services(services(name))')
     .eq('client_id', profile.id)
     .eq('status', 'active')
     .gte('date', format(startOfToday(), 'yyyy-MM-dd'))
@@ -185,10 +185,18 @@ async function handleMyAppointments(chatId: string | number, telegramId: string 
     const dateStr = format(new Date(a.date + 'T12:00:00'), 'eeee, d MMMM', { locale: ru });
     const svcNames = (a.appointment_services as unknown as { services: { name: string } | null }[])
       .map(s => s.services?.name).filter(Boolean).join(', ');
-    return `📅 *${dateStr}*\n⏰ ${a.start_time.substring(0, 5)} — ${a.end_time.substring(0, 5)}\n💅 ${svcNames}\n💰 ${a.total_price} ₽`;
-  }).join('\n\n');
+    return {
+      text: `📅 *${dateStr}*\n⏰ ${a.start_time.substring(0, 5)} — ${a.end_time.substring(0, 5)}\n💅 ${svcNames}\n💰 ${a.total_price} ₽`,
+      id: a.id
+    };
+  });
 
-  await reply(`*Ваши предстоящие записи:*\n\n${lines}`, MAIN_MENU);
+  const buttons = lines.flatMap(line => [
+    [{ text: `❌ Отменить: ${line.text.split('\n')[0].replace('📅 *', '').replace('*', '')}`, callback_data: `confirm_cancel:${line.id}` }]
+  ]);
+  buttons.push([{ text: '🏠 Главное меню', callback_data: 'start_over' }]);
+
+  await reply(`*Ваши предстоящие записи:*\n\n${lines.map(l => l.text).join('\n\n')}`, { inline_keyboard: buttons });
 }
 
 // ─── Webhook handler ─────────────────────────────────────────────────────────
@@ -525,6 +533,60 @@ export async function POST(req: Request) {
       // Мои записи
       if (data === 'my_appointments') {
         await handleMyAppointments(chatId, telegramId, messageId);
+      }
+
+      // Подтверждение отмены
+      if (data.startsWith('confirm_cancel:')) {
+        const apptId = data.split(':')[1];
+        await editMsg(chatId, messageId, '⚠️ *Вы уверены, что хотите отменить эту запись?*', {
+          inline_keyboard: [
+            [{ text: '✅ Да, отменить', callback_data: `cancel_now:${apptId}` }],
+            [{ text: '◀️ Назад к записям', callback_data: 'my_appointments' }]
+          ]
+        });
+      }
+
+      // Сама отмена
+      if (data.startsWith('cancel_now:')) {
+        const apptId = data.split(':')[1];
+        
+        // 1. Получаем данные записи перед отменой для уведомления
+        const { data: appt } = await supabaseAdmin
+          .from('appointments')
+          .select(`
+            date, start_time, 
+            profiles(name, phone, telegram_username),
+            appointment_services(services(name))
+          `)
+          .eq('id', apptId)
+          .single();
+
+        // 2. Обновляем статус
+        const { error } = await supabaseAdmin
+          .from('appointments')
+          .update({ status: 'cancelled_by_client' })
+          .eq('id', apptId);
+
+        if (error) {
+          await editMsg(chatId, messageId, '❌ Не удалось отменить запись. Попробуйте еще раз.', MAIN_MENU);
+          return NextResponse.json({ ok: true });
+        }
+
+        await editMsg(chatId, messageId, '✅ *Запись успешно отменена.*', MAIN_MENU);
+
+        // 3. Уведомляем админов
+        if (appt) {
+          const client = (appt as any).profiles;
+          const dateStr = format(new Date(appt.date + 'T12:00:00'), 'eeee, d MMMM', { locale: ru });
+          const services = (appt as any).appointment_services
+            .map((s: any) => s.services?.name).filter(Boolean).join(', ');
+
+          let adminMsg = `🔴 *ОТМЕНА ЗАПИСИ (через бот)!*\n\n👤 *Клиент:* ${client?.name || '—'}\n📞 *Телефон:* ${client?.phone || '—'}`;
+          if (client?.telegram_username) adminMsg += `\n✈️ *Telegram:* @${client.telegram_username}`;
+          adminMsg += `\n📅 *Дата:* ${dateStr}\n⏰ *Время:* ${appt.start_time.substring(0, 5)}\n💅 *Услуги:* ${services}`;
+          
+          await notifyAdmins(adminMsg);
+        }
       }
     }
 
