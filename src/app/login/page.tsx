@@ -74,7 +74,7 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
           </Link>
         </p>
         <p className="text-center mt-2 text-[8px] text-zinc-200 uppercase tracking-[0.3em]">
-          v.02.70.oidc
+          v.02.80.debug
         </p>
       </div>
     </div>

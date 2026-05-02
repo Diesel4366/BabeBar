@@ -67,39 +67,52 @@ export async function exchangeTelegramCode(code: string) {
   const clientSecret = process.env.TELEGRAM_CLIENT_SECRET;
   
   if (!clientSecret) {
-    console.error('TELEGRAM_CLIENT_SECRET not set in env');
+    console.error('CRITICAL: TELEGRAM_CLIENT_SECRET not found in environment');
     return null;
   }
 
-  const res = await fetch('https://oauth.telegram.org/token', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: new URLSearchParams({
-      grant_type: 'authorization_code',
-      code,
-      client_id: clientId,
-      client_secret: clientSecret,
-      redirect_uri: 'https://babebar.ru/api/auth/telegram/callback'
-    })
-  });
+  try {
+    const res = await fetch('https://oauth.telegram.org/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        grant_type: 'authorization_code',
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: 'https://babebar.ru/api/auth/telegram/callback'
+      })
+    });
 
-  if (!res.ok) {
-    console.error('Telegram token exchange failed:', await res.text());
-    return null;
-  }
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error('Telegram token exchange error:', errorText);
+      return null;
+    }
 
-  const data = await res.json();
-  // В OIDC Telegram возвращает id_token (JWT)
-  // Мы можем декодировать его, чтобы получить данные пользователя
-  if (data.id_token) {
-    const parts = data.id_token.split('.');
-    const payload = JSON.parse(atob(parts[1]));
-    return {
-      id: String(payload.sub),
-      first_name: payload.given_name || payload.nickname || 'User',
-      username: payload.nickname || null,
-      photo_url: payload.picture || null
-    };
+    const data = await res.json();
+    
+    if (data.id_token) {
+      const parts = data.id_token.split('.');
+      const base64Url = parts[1];
+      const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+      
+      // Декодируем с поддержкой UTF-8 (для русских имен)
+      const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      
+      const payload = JSON.parse(jsonPayload);
+      
+      return {
+        id: String(payload.sub),
+        first_name: payload.name || payload.given_name || payload.nickname || 'User',
+        username: payload.nickname || null,
+        photo_url: payload.picture || null
+      };
+    }
+  } catch (e) {
+    console.error('exchangeTelegramCode exception:', e);
   }
 
   return null;
