@@ -112,35 +112,24 @@ export async function POST(req: Request) {
 
     if (servicesError) throw servicesError;
 
-    // 4. Отправляем уведомление в Telegram (опционально, если настроен бот)
-    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-    const adminChatId = process.env.TELEGRAM_ADMIN_CHAT_ID;
+    // 4. Отправляем уведомления в Telegram
+    const telegramToken = process.env.TELEGRAM_TOKEN;
+    const rawChatIds = process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '';
+    const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
 
-    if (telegramToken && adminChatId) {
-      const message = `
-🌟 *Новая запись на сайте!*
+    if (telegramToken && chatIds.length > 0) {
+      const dateFormatted = new Date(date + 'T12:00:00').toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'long', weekday: 'long',
+      });
+      const message = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${services.map((s: Service) => s.name).join(', ')}\n💰 *Сумма:* ${totalPrice} ₽`;
 
-👤 *Клиент:* ${name}
-📞 *Телефон:* ${phone}
-📅 *Дата:* ${new Date(date).toLocaleDateString('ru-RU')}
-⏰ *Время:* ${time}
-💅 *Услуги:* ${services.map((s: any) => s.name).join(', ')}
-💰 *Сумма:* ${totalPrice} ₽
-      `;
-
-      try {
-        await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+      await Promise.allSettled(chatIds.map(chatId =>
+        fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: adminChatId,
-            text: message,
-            parse_mode: 'Markdown'
-          })
-        });
-      } catch {
-        // уведомление опционально, ошибка не критична
-      }
+          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
+        })
+      ));
     }
 
     return NextResponse.json({ success: true, appointmentId: appointment.id });
