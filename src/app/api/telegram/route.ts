@@ -317,52 +317,71 @@ export async function POST(req: Request) {
         await editMsg(chatId, messageId, 'Главное меню *BABEBAR* 🌟', MAIN_MENU);
       }
 
-      // Список услуг
+      // Список категорий (вместо огромного списка услуг)
       if (data === 'view_services') {
-        const { data: services } = await supabaseAdmin
-          .from('services').select('id, name, price')
-          .eq('is_active', true).eq('is_addon', false).order('name');
+        const { data: categories } = await supabaseAdmin
+          .from('services')
+          .select('category')
+          .eq('is_active', true)
+          .eq('is_addon', false);
 
-        if (!services?.length) {
+        if (!categories?.length) {
           await editMsg(chatId, messageId, 'Услуги временно недоступны.', MAIN_MENU);
           return NextResponse.json({ ok: true });
         }
 
+        // Получаем уникальные категории и сортируем их
+        const uniqueCats = Array.from(new Set(categories.map(c => c.category))).sort();
+        
         const buttons = [
-          ...services.map(s => ([{ text: `${s.name} — ${s.price} ₽`, callback_data: `select_date:${s.id}` }])),
+          ...uniqueCats.map(cat => ([{ text: `✨ ${cat}`, callback_data: `view_cat:${cat}` }])),
           [{ text: '◀️ Назад', callback_data: 'start_over' }],
         ];
-        await editMsg(chatId, messageId, 'Выберите услугу:', { inline_keyboard: buttons });
+        
+        await editMsg(chatId, messageId, 'Выберите категорию услуг:', { inline_keyboard: buttons });
       }
 
-      // Выбор даты (только рабочие дни из расписания)
-      if (data.startsWith('select_date:')) {
-        const serviceId = data.split(':')[1];
-        const todayStr = format(startOfToday(), 'yyyy-MM-dd');
-        const untilStr = format(addDays(startOfToday(), 60), 'yyyy-MM-dd');
+      // Список услуг в выбранной категории
+      if (data.startsWith('view_cat:')) {
+        const category = data.split(':')[1];
+        const { data: services } = await supabaseAdmin
+          .from('services')
+          .select('id, name, price')
+          .eq('is_active', true)
+          .eq('is_addon', false)
+          .eq('category', category)
+          .order('name');
 
-        const { data: workingDays } = await supabaseAdmin
-          .from('schedule_exceptions')
-          .select('date')
-          .eq('is_working', true)
-          .gte('date', todayStr)
-          .lte('date', untilStr)
-          .order('date', { ascending: true })
-          .limit(7);
-
-        if (!workingDays?.length) {
-          await editMsg(chatId, messageId, 'Ближайших свободных дней нет. Попробуйте позже.', {
-            inline_keyboard: [[{ text: '◀️ Назад', callback_data: 'view_services' }]],
+        if (!services?.length) {
+          await editMsg(chatId, messageId, 'В этой категории пока нет услуг.', { 
+            inline_keyboard: [[{ text: '◀️ Назад к категориям', callback_data: 'view_services' }]] 
           });
           return NextResponse.json({ ok: true });
         }
 
         const buttons = [
+          ...services.map(s => ([{ text: `${s.name} — ${s.price} ₽`, callback_data: `select_date:${s.id}` }])),
+          [{ text: '◀️ Назад к категориям', callback_data: 'view_services' }],
+        ];
+        await editMsg(chatId, messageId, `*${category}* — выберите услугу:`, { inline_keyboard: buttons });
+      }
+
+      // Выбор даты (только рабочие дни из расписания)
+      if (data.startsWith('select_date:')) {
+        const serviceId = data.split(':')[1];
+        
+        // Получаем услугу, чтобы знать её категорию для кнопки "Назад"
+        const { data: service } = await supabaseAdmin
+          .from('services').select('category').eq('id', serviceId).single();
+
+        const todayStr = format(startOfToday(), 'yyyy-MM-dd');
+...
+        const buttons = [
           ...workingDays.map(d => [{
             text: format(new Date(d.date + 'T12:00:00'), 'eeee, d MMMM', { locale: ru }),
             callback_data: `select_time:${serviceId}:${d.date}`,
           }]),
-          [{ text: '◀️ Назад', callback_data: 'view_services' }],
+          [{ text: '◀️ Назад к услугам', callback_data: `view_cat:${service?.category || ''}` }],
         ];
         await editMsg(chatId, messageId, 'Выберите дату:', { inline_keyboard: buttons });
       }
