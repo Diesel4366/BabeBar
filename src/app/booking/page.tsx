@@ -40,7 +40,7 @@ function BookingContent() {
     fetch('/api/auth/me').then(r => r.json()).then(me => {
       if (me) {
         setAuthUser({ name: me.name, phone: me.phone ?? '' });
-        setFormData({ name: me.name ?? '', phone: me.phone ?? '' });
+        setFormData({ name: me.name ?? '', phone: formatPhone(me.phone ?? '') });
         // Восстанавливаем состояние если вернулись после авторизации
         if (searchParams.get('restore')) {
           try {
@@ -165,7 +165,11 @@ function BookingContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setBookingError(null);
-    if (formData.phone.length < 18) { setBookingError('Пожалуйста, введите полный номер телефона'); return; }
+    const digits = formData.phone.replace(/\D/g, '');
+    if (digits.length < 11) { 
+      setBookingError('Пожалуйста, введите полный номер телефона'); 
+      return; 
+    }
     setLoading(true);
     try {
       const response = await fetch('/api/booking', {
