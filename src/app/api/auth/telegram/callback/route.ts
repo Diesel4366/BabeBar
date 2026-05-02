@@ -46,7 +46,7 @@ export async function GET(req: Request) {
     if (!valid) return fail('Hash verification failed');
   }
 
-  const telegramId = parseInt(tgData.id);
+  const telegramId = tgData.id; // Работаем как со строкой!
 
   const { data: existing } = await supabaseAdmin
     .from('profiles')
