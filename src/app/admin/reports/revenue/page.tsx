@@ -65,30 +65,35 @@ export default async function RevenueReport() {
           </thead>
           <tbody className="divide-y divide-zinc-100">
             {data.length > 0 ? (
-              data.map((item) => (
-                <tr key={item.id} className="hover:bg-zinc-50/30 transition-colors group">
-                  <td className="px-10 py-8">
-                    <div className="font-black text-sm uppercase tracking-tight">{format(new Date(item.date), 'd MMM', { locale: ru })}</div>
-                    <div className="text-[10px] text-zinc-400 font-bold uppercase">{format(new Date(item.date), 'eeee', { locale: ru })}</div>
-                  </td>
-                  <td className="px-10 py-8">
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
-                        <User size={14} />
+              data.map((item) => {
+                const profile = item.profiles as unknown as { name: string } | null;
+                const services = (item.appointment_services as any[])?.map((s: any) => s.services?.name).filter(Boolean).join(', ');
+                
+                return (
+                  <tr key={item.id} className="hover:bg-zinc-50/30 transition-colors group">
+                    <td className="px-10 py-8">
+                      <div className="font-black text-sm uppercase tracking-tight">{format(new Date(item.date), 'd MMM', { locale: ru })}</div>
+                      <div className="text-[10px] text-zinc-400 font-bold uppercase">{format(new Date(item.date), 'eeee', { locale: ru })}</div>
+                    </td>
+                    <td className="px-10 py-8">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                          <User size={14} />
+                        </div>
+                        <span className="font-bold text-sm text-[#0A0A0A] uppercase">{profile?.name || '—'}</span>
                       </div>
-                      <span className="font-bold text-sm text-[#0A0A0A] uppercase">{item.profiles?.name || '—'}</span>
-                    </div>
-                  </td>
-                  <td className="px-10 py-8">
-                    <div className="text-xs font-medium text-zinc-500 italic line-clamp-1">
-                      {item.appointment_services?.map((s: any) => s.services?.name).join(', ')}
-                    </div>
-                  </td>
-                  <td className="px-10 py-8 text-right">
-                    <span className="font-black text-lg text-[#0A0A0A]">{item.total_price} ₽</span>
-                  </td>
-                </tr>
-              ))
+                    </td>
+                    <td className="px-10 py-8">
+                      <div className="text-xs font-medium text-zinc-500 italic line-clamp-1">
+                        {services || 'Без услуг'}
+                      </div>
+                    </td>
+                    <td className="px-10 py-8 text-right">
+                      <span className="font-black text-lg text-[#0A0A0A]">{item.total_price} ₽</span>
+                    </td>
+                  </tr>
+                );
+              })
             ) : (
               <tr>
                 <td colSpan={4} className="py-20 text-center text-zinc-400 font-bold text-sm uppercase tracking-widest">

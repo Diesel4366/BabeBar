@@ -173,38 +173,43 @@ export default async function AdminDashboard() {
           
           <div className="space-y-4">
             {data.upcoming.length > 0 ? (
-              data.upcoming.map((appt) => (
-                <div key={appt.id} className="bg-white p-6 rounded-[2rem] border border-zinc-100 flex items-center justify-between hover:shadow-md transition-all group/item">
-                  <div className="flex items-center gap-6">
-                    <div className="text-center min-w-[60px]">
-                      <div className="text-lg font-black leading-none">{appt.start_time.substring(0, 5)}</div>
-                      <div className="text-[10px] text-zinc-400 font-bold uppercase">{appt.end_time.substring(0, 5)}</div>
-                    </div>
-                    <div className="h-10 w-[1px] bg-zinc-100" />
-                    <div>
-                      <div className="font-black text-sm uppercase tracking-tight text-[#0A0A0A]">{appt.profiles?.name || 'Клиент'}</div>
-                      <div className="text-[10px] text-zinc-400 font-medium italic">{appt.appointment_services?.[0]?.services?.name || 'Услуга'}</div>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="text-right mr-4 hidden md:block">
-                      <div className="font-black text-sm">{appt.total_price} ₽</div>
-                      <div className={`text-[9px] font-black uppercase tracking-widest ${appt.status === 'active' ? 'text-blue-500' : 'text-green-500'}`}>
-                        {appt.status === 'active' ? 'Ожидается' : 'Завершено'}
+              data.upcoming.map((appt) => {
+                const profile = appt.profiles as unknown as { name: string; telegram_username?: string } | null;
+                const services = (appt.appointment_services as any[])?.map((s: any) => s.services?.name).filter(Boolean).join(', ');
+
+                return (
+                  <div key={appt.id} className="bg-white p-6 rounded-[2rem] border border-zinc-100 flex items-center justify-between hover:shadow-md transition-all group/item">
+                    <div className="flex items-center gap-6">
+                      <div className="text-center min-w-[60px]">
+                        <div className="text-lg font-black leading-none">{appt.start_time.substring(0, 5)}</div>
+                        <div className="text-[10px] text-zinc-400 font-bold uppercase">{appt.end_time.substring(0, 5)}</div>
+                      </div>
+                      <div className="h-10 w-[1px] bg-zinc-100" />
+                      <div>
+                        <div className="font-black text-sm uppercase tracking-tight text-[#0A0A0A]">{profile?.name || 'Клиент'}</div>
+                        <div className="text-[10px] text-zinc-400 font-medium italic">{services || 'Услуга'}</div>
                       </div>
                     </div>
-                    <div className="flex gap-2">
-                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors" title="Отменить">
-                        <XCircle size={18} />
-                      </button>
-                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors" title="Завершить">
-                        <CheckCircle2 size={18} />
-                      </button>
+                    
+                    <div className="flex items-center gap-4">
+                      <div className="text-right mr-4 hidden md:block">
+                        <div className="font-black text-sm">{appt.total_price} ₽</div>
+                        <div className={`text-[9px] font-black uppercase tracking-widest ${appt.status === 'active' ? 'text-blue-500' : 'text-green-500'}`}>
+                          {appt.status === 'active' ? 'Ожидается' : 'Завершено'}
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors" title="Отменить">
+                          <XCircle size={18} />
+                        </button>
+                        <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors" title="Завершить">
+                          <CheckCircle2 size={18} />
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="bg-white p-20 rounded-[2.5rem] border border-zinc-100 border-dashed text-center space-y-4">
                 <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto text-zinc-300">
