@@ -238,8 +238,11 @@ export async function POST(req: Request) {
 
         if (telegramId) {
           const { data: profile } = await supabaseAdmin
-            .from('profiles').select('id, telegram_photo, phone, telegram_id').eq('telegram_id', telegramId).maybeSingle();
-    ...
+            .from('profiles')
+            .select('id, telegram_photo, phone, telegram_id')
+            .eq('telegram_id', telegramId)
+            .maybeSingle();
+
           let profileId = profile?.id;
 
           if (!profileId) {
