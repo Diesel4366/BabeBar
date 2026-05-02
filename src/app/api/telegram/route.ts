@@ -418,7 +418,7 @@ export async function POST(req: Request) {
 
         const [{ data: service }, { data: profile }] = await Promise.all([
           supabaseAdmin.from('services').select('name, price, duration_minutes').eq('id', serviceId).single(),
-          supabaseAdmin.from('profiles').select('id, name, phone').eq('telegram_id', telegramId).maybeSingle(),
+          supabaseAdmin.from('profiles').select('id, name, phone, telegram_username').eq('telegram_id', telegramId).maybeSingle(),
         ]);
 
         if (!service) {
