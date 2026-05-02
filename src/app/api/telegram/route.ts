@@ -158,12 +158,34 @@ export async function POST(req: Request) {
           const { data: profile } = await supabaseAdmin
             .from('profiles').select('id, telegram_photo, phone').eq('telegram_id', String(telegramId)).maybeSingle();
 
-          if (profile) {
-            if (!profile.telegram_photo) {
-              const url = await fetchAndStoreAvatar(telegramId, profile.id);
-              if (url) await supabaseAdmin.from('profiles').update({ telegram_photo: url }).eq('id', profile.id);
+          let profileId = profile?.id;
+
+          if (!profileId) {
+            // Создаём профиль из данных Telegram если его ещё нет
+            const { data: created } = await supabaseAdmin
+              .from('profiles')
+              .insert({
+                id: crypto.randomUUID(),
+                telegram_id: String(telegramId),
+                name: message.from?.first_name ?? null,
+                telegram_username: message.from?.username ?? null,
+              })
+              .select('id').single();
+            profileId = created?.id ?? null;
+          } else {
+            // Обновляем имя и username на случай если изменились
+            await supabaseAdmin.from('profiles').update({
+              name: message.from?.first_name ?? null,
+              telegram_username: message.from?.username ?? null,
+            }).eq('id', profileId);
+          }
+
+          if (profileId) {
+            if (!profile?.telegram_photo) {
+              const url = await fetchAndStoreAvatar(telegramId, profileId);
+              if (url) await supabaseAdmin.from('profiles').update({ telegram_photo: url }).eq('id', profileId);
             }
-            if (!profile.phone) {
+            if (!profile?.phone) {
               await sendMsg(chatId,
                 '📱 Поделитесь номером телефона — тогда при записи через сайт данные заполнятся автоматически.',
                 {
