@@ -7,6 +7,7 @@ import { ChevronLeft, Clock, CheckCircle2, Phone, User, Star, ArrowRight, Plus, 
 import Link from 'next/link';
 import { Service } from '@/types';
 import { CATEGORY_ORDER } from '@/lib/config';
+import BookingSuccessModal from '@/components/BookingSuccessModal';
 
 function BookingContent() {
   const router = useRouter();
@@ -187,6 +188,11 @@ function BookingContent() {
     }
   };
 
+  const handleCloseSuccess = () => {
+    setSuccess(false);
+    router.push('/');
+  };
+
   if (isInitializing) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -195,25 +201,19 @@ function BookingContent() {
     );
   }
 
-  if (success) {
-    return (
-      <div className="min-h-screen bg-white flex flex-col items-center justify-center p-8 text-center">
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="max-w-sm space-y-10">
-          <div className="w-24 h-24 bg-green-50 rounded-full flex items-center justify-center text-green-500 mx-auto shadow-sm">
-            <CheckCircle2 size={48} />
-          </div>
-          <div className="space-y-4">
-            <h1 className="text-4xl font-black uppercase tracking-tighter">ВЫ ЗАПИСАНЫ!</h1>
-            <p className="text-zinc-500 font-medium">Мы получили вашу запись на {selectedDate?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })} в {selectedTime}. Скоро свяжемся!</p>
-          </div>
-          <Link href="/" className="btn-primary w-full py-6">НА ГЛАВНУЮ</Link>
-        </motion.div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-[#FAFAFA] flex flex-col">
+      <BookingSuccessModal 
+        isOpen={success} 
+        onClose={handleCloseSuccess}
+        data={success ? {
+          date: selectedDate?.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' }) || '',
+          time: selectedTime || '',
+          services: selectedServices,
+          totalPrice: totalPrice
+        } : null}
+      />
+
       <header className="bg-white border-b border-zinc-100 py-6 px-6 sticky top-0 z-50">
         <div className="max-w-4xl mx-auto flex justify-between items-center">
           <div className="flex items-center gap-6">
