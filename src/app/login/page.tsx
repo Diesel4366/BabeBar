@@ -65,6 +65,9 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
             Войти в панель управления
           </Link>
         </p>
+        <p className="text-center mt-2 text-[8px] text-zinc-200 uppercase tracking-[0.3em]">
+          v.02.40.ready
+        </p>
       </div>
     </div>
   );
