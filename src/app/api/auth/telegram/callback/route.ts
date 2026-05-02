@@ -1,32 +1,49 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { verifyTelegramAuth, createUserToken } from '@/lib/userAuth';
+import { verifyTelegramAuth, createUserToken, exchangeTelegramCode } from '@/lib/userAuth';
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const origin = url.origin;
-  const fail = () => NextResponse.redirect(new URL('/login?error=1', origin));
+  const fail = (msg?: string) => {
+    console.error('Auth fail:', msg);
+    return NextResponse.redirect(new URL('/login?error=1', origin));
+  };
 
   let tgData: Record<string, string> = {};
 
-  const tgAuthResult = url.searchParams.get('tgAuthResult');
-  if (tgAuthResult) {
-    try {
-      const b64 = tgAuthResult.replace(/-/g, '+').replace(/_/g, '/');
-      const decoded = atob(b64);
-      const parsed = JSON.parse(decoded);
-      tgData = Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v)]));
-    } catch {
-      return fail();
-    }
+  // 1. ПРОВЕРЯЕМ НОВЫЙ МЕТОД (OIDC)
+  const code = url.searchParams.get('code');
+  if (code) {
+    const userData = await exchangeTelegramCode(code);
+    if (!userData) return fail('Code exchange failed');
+    tgData = {
+      id: userData.id,
+      first_name: userData.first_name,
+      username: userData.username || '',
+      photo_url: userData.photo_url || '',
+    };
   } else {
-    url.searchParams.forEach((v, k) => { tgData[k] = v; });
+    // 2. СТАРЫЙ МЕТОД (Widget)
+    const tgAuthResult = url.searchParams.get('tgAuthResult');
+    if (tgAuthResult) {
+      try {
+        const b64 = tgAuthResult.replace(/-/g, '+').replace(/_/g, '/');
+        const decoded = atob(b64);
+        const parsed = JSON.parse(decoded);
+        tgData = Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v)]));
+      } catch {
+        return fail('JSON parse failed');
+      }
+    } else {
+      url.searchParams.forEach((v, k) => { tgData[k] = v; });
+    }
+
+    if (!tgData.id || !tgData.hash) return fail('Missing ID or Hash');
+
+    const valid = await verifyTelegramAuth(tgData);
+    if (!valid) return fail('Hash verification failed');
   }
-
-  if (!tgData.id || !tgData.hash) return fail();
-
-  const valid = await verifyTelegramAuth(tgData);
-  if (!valid) return fail();
 
   const telegramId = parseInt(tgData.id);
 
@@ -58,7 +75,7 @@ export async function GET(req: Request) {
       .select('id')
       .single();
 
-    if (error || !created) return fail();
+    if (error || !created) return fail('DB insert failed');
     profileId = created.id;
   }
 

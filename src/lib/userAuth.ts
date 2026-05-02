@@ -61,3 +61,46 @@ export async function verifyTelegramAuth(data: Record<string, string>): Promise<
 
   return computed === hash;
 }
+
+export async function exchangeTelegramCode(code: string) {
+  const clientId = '8752821995';
+  const clientSecret = process.env.TELEGRAM_CLIENT_SECRET;
+  
+  if (!clientSecret) {
+    console.error('TELEGRAM_CLIENT_SECRET not set in env');
+    return null;
+  }
+
+  const res = await fetch('https://oauth.telegram.org/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      grant_type: 'authorization_code',
+      code,
+      client_id: clientId,
+      client_secret: clientSecret,
+      redirect_uri: 'https://babebar.ru/api/auth/telegram/callback'
+    })
+  });
+
+  if (!res.ok) {
+    console.error('Telegram token exchange failed:', await res.text());
+    return null;
+  }
+
+  const data = await res.json();
+  // В OIDC Telegram возвращает id_token (JWT)
+  // Мы можем декодировать его, чтобы получить данные пользователя
+  if (data.id_token) {
+    const parts = data.id_token.split('.');
+    const payload = JSON.parse(atob(parts[1]));
+    return {
+      id: String(payload.sub),
+      first_name: payload.given_name || payload.nickname || 'User',
+      username: payload.nickname || null,
+      photo_url: payload.picture || null
+    };
+  }
+
+  return null;
+}
