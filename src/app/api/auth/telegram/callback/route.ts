@@ -76,7 +76,10 @@ export async function GET(req: Request) {
       .select('id')
       .single();
 
-    if (error || !created) return fail('DB insert failed');
+    if (error || !created) {
+      console.error('DB Error details:', error);
+      return fail(`DB error: ${error?.message || 'Unknown'}`);
+    }
     profileId = created.id;
   }
 
