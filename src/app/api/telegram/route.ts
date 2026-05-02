@@ -375,7 +375,24 @@ export async function POST(req: Request) {
           .from('services').select('category').eq('id', serviceId).single();
 
         const todayStr = format(startOfToday(), 'yyyy-MM-dd');
-...
+        const untilStr = format(addDays(startOfToday(), 60), 'yyyy-MM-dd');
+
+        const { data: workingDays } = await supabaseAdmin
+          .from('schedule_exceptions')
+          .select('date')
+          .eq('is_working', true)
+          .gte('date', todayStr)
+          .lte('date', untilStr)
+          .order('date', { ascending: true })
+          .limit(7);
+
+        if (!workingDays?.length) {
+          await editMsg(chatId, messageId, 'Ближайших свободных дней нет. Попробуйте позже.', {
+            inline_keyboard: [[{ text: '◀️ Назад', callback_data: 'view_services' }]],
+          });
+          return NextResponse.json({ ok: true });
+        }
+
         const buttons = [
           ...workingDays.map(d => [{
             text: format(new Date(d.date + 'T12:00:00'), 'eeee, d MMMM', { locale: ru }),
