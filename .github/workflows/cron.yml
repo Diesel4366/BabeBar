@@ -1,0 +1,15 @@
+name: Hourly Reminder Cron
+
+on:
+  schedule:
+    - cron: '0 * * * *' # Запуск в 00 минут каждого часа
+  workflow_dispatch: # Позволяет запустить вручную из интерфейса GitHub
+
+jobs:
+  trigger_reminders:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Hit Reminder API
+        run: |
+          curl -X GET "https://babebar.ru/api/cron/reminders" \
+          -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}"
