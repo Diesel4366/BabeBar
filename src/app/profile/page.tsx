@@ -115,7 +115,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-5">
             {user?.telegram_photo && !photoError ? (
               <img
-                src="/api/user/photo"
+                src={user.telegram_photo}
                 alt=""
                 className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                 style={{ outline: '2px solid #D14D72', outlineOffset: '2px' }}
@@ -164,6 +164,31 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
+
+        {/* Hint: get photo */}
+        {(!user?.telegram_photo || photoError) && (
+          <div className="bg-white rounded-[2rem] border border-zinc-100 p-5 flex items-start gap-4">
+            <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-base" style={{ backgroundColor: '#D14D7218' }}>
+              📸
+            </div>
+            <div>
+              <div className="text-xs font-black uppercase tracking-widest">Добавить фото профиля</div>
+              <div className="text-zinc-400 text-sm font-medium mt-1 leading-relaxed">
+                Напишите боту{' '}
+                <a
+                  href="https://t.me/BabeBar_bot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-black"
+                  style={{ color: '#D14D72' }}
+                >
+                  @BabeBar_bot
+                </a>
+                {' '}команду <span className="font-black">/start</span> — фото загрузится автоматически
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Upcoming */}
         <section>

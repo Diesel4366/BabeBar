@@ -5,6 +5,38 @@ import { ru } from 'date-fns/locale';
 
 const TELEGRAM_TOKEN = process.env.TELEGRAM_TOKEN;
 
+async function fetchAndStoreAvatar(telegramId: number, profileId: string): Promise<string | null> {
+  if (!TELEGRAM_TOKEN) return null;
+  try {
+    const r1 = await fetch(
+      `https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUserProfilePhotos?user_id=${telegramId}&limit=1`
+    );
+    const d1 = await r1.json();
+    if (!d1.ok || !d1.result?.photos?.[0]?.length) return null;
+
+    const sizes = d1.result.photos[0];
+    const fileId = sizes[sizes.length - 1].file_id;
+
+    const r2 = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getFile?file_id=${fileId}`);
+    const d2 = await r2.json();
+    if (!d2.ok || !d2.result?.file_path) return null;
+
+    const photoRes = await fetch(`https://api.telegram.org/file/bot${TELEGRAM_TOKEN}/${d2.result.file_path}`);
+    if (!photoRes.ok) return null;
+
+    const buffer = await photoRes.arrayBuffer();
+    const { error } = await supabaseAdmin.storage
+      .from('avatars')
+      .upload(`${profileId}.jpg`, buffer, { contentType: 'image/jpeg', upsert: true });
+    if (error) return null;
+
+    const { data: { publicUrl } } = supabaseAdmin.storage.from('avatars').getPublicUrl(`${profileId}.jpg`);
+    return publicUrl;
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(req: Request) {
   if (!TELEGRAM_TOKEN) {
     return NextResponse.json({ error: 'Telegram token not set' }, { status: 500 });
@@ -25,6 +57,25 @@ export async function POST(req: Request) {
             [{ text: '📅 Мои записи', callback_data: 'my_appointments' }]
           ]
         });
+
+        // Обновляем фото профиля если его нет
+        const telegramId = message.from?.id;
+        if (telegramId) {
+          const { data: profile } = await supabaseAdmin
+            .from('profiles')
+            .select('id, telegram_photo')
+            .eq('telegram_id', String(telegramId))
+            .maybeSingle();
+
+          if (profile && !profile.telegram_photo) {
+            const photoUrl = await fetchAndStoreAvatar(telegramId, profile.id);
+            if (photoUrl) {
+              await supabaseAdmin.from('profiles')
+                .update({ telegram_photo: photoUrl })
+                .eq('id', profile.id);
+            }
+          }
+        }
       }
     }
 
