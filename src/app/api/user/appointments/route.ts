@@ -20,8 +20,8 @@ export async function GET() {
       )
     `)
     .eq('client_id', profileId)
-    .order('date', { ascending: false })
-    .order('start_time', { ascending: false });
+    .order('date', { ascending: true })
+    .order('start_time', { ascending: true });
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data ?? []);

@@ -116,8 +116,27 @@ export default function BookingSuccessModal({ isOpen, onClose, data }: BookingSu
                 <div className="space-y-3">
                   <button
                     onClick={() => {
-                      // Логика добавления в календарь (iCal/Google)
-                      onClose();
+                      const [day, monthName] = data.date.split(' ');
+                      const year = new Date().getFullYear();
+                      
+                      // Маппинг месяцев для создания корректной даты
+                      const months: Record<string, string> = {
+                        'января': '01', 'февраля': '02', 'марта': '03', 'апреля': '04', 'мая': '05', 'июня': '06',
+                        'июля': '07', 'августа': '08', 'сентября': '09', 'октября': '10', 'ноября': '11', 'декабря': '12'
+                      };
+                      
+                      const month = months[monthName.toLowerCase()] || '01';
+                      const dateStr = `${year}${month}${day.padStart(2, '0')}`;
+                      const startTime = data.time.replace(':', '');
+                      
+                      // Создаем Google Calendar Link
+                      const title = encodeURIComponent(`BABEBAR: ${data.services.map(s => s.name).join(', ')}`);
+                      const details = encodeURIComponent('Ждем вас в нашей студии! Если планы изменятся, пожалуйста, предупредите нас заранее.');
+                      const location = encodeURIComponent('Нижний Новгород, ул. Сазанова 2А');
+                      const dates = `${dateStr}T${startTime}00/${dateStr}T${startTime}00`; // Упрощенно начало=конец для календаря
+                      
+                      const url = `https://www.google.com/calendar/render?action=TEMPLATE&text=${title}&details=${details}&location=${location}&dates=${dates}`;
+                      window.open(url, '_blank');
                     }}
                     className="w-full py-5 rounded-2xl bg-[#0A0A0A] text-white font-black text-[10px] uppercase tracking-widest hover:bg-primary transition-all shadow-lg shadow-black/10 flex items-center justify-center gap-3 group"
                   >

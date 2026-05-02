@@ -83,8 +83,13 @@ export default function ProfilePage() {
     setCancelling(false);
   };
 
-  const upcoming = appointments.filter(a => a.status === 'active');
-  const past = appointments.filter(a => a.status !== 'active');
+  const upcoming = appointments
+    .filter(a => a.status === 'active')
+    .sort((a, b) => new Date(`${a.date}T${a.start_time}`).getTime() - new Date(`${b.date}T${b.start_time}`).getTime());
+
+  const past = appointments
+    .filter(a => a.status !== 'active')
+    .sort((a, b) => new Date(`${b.date}T${b.start_time}`).getTime() - new Date(`${a.date}T${a.start_time}`).getTime());
   const completed = appointments.filter(a => a.status === 'completed');
   const allVisits = appointments.filter(a => !a.status.startsWith('cancelled'));
   const totalSpent = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
