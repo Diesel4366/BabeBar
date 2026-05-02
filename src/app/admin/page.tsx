@@ -18,18 +18,17 @@ import { ru } from 'date-fns/locale';
 
 async function getDashboardData() {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    // Используем дату по Москве (UTC+3) или локальную серверную
+    const today = format(new Date(), 'yyyy-MM-dd');
     const monthStart = startOfMonth(new Date()).toISOString();
 
-    const [todayRes, monthClientsRes, revenueRes, upcomingRes] = await Promise.all([
-      // Записи сегодня
-      supabaseAdmin
-        .from('appointments')
-        .select('*', { count: 'exact', head: true })
-        .eq('date', today)
-        .in('status', ['active', 'completed']),
+    const [todayActiveRes, todayCancelledRes, todayCompletedRes, monthClientsRes, revenueRes, upcomingRes] = await Promise.all([
+      // Статусы на сегодня
+      supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).eq('status', 'active'),
+      supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).eq('status', 'cancelled'),
+      supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).eq('status', 'completed'),
       
-      // Клиенты за месяц (для сегментации)
+      // Клиенты за месяц
       supabaseAdmin
         .from('profiles')
         .select('id, created_at')
@@ -72,12 +71,16 @@ async function getDashboardData() {
       .not('client_id', 'is', null);
     
     const uniqueClientIds = Array.from(new Set(returningClients?.map(a => a.client_id)));
-    // Упрощенно: если ID клиента нет в списке созданных в этом месяце — он вернувшийся
     const createdThisMonthIds = new Set(monthClientsRes.data?.map(c => c.id));
     const returningCount = uniqueClientIds.filter(id => !createdThisMonthIds.has(id)).length;
 
     return {
-      todayAppointments: todayRes.count ?? 0,
+      todayStats: {
+        active: todayActiveRes.count ?? 0,
+        cancelled: todayCancelledRes.count ?? 0,
+        completed: todayCompletedRes.count ?? 0,
+        total: (todayActiveRes.count ?? 0) + (todayCompletedRes.count ?? 0)
+      },
       newClients: newClientsCount,
       returningClients: returningCount,
       monthRevenue,
@@ -85,7 +88,13 @@ async function getDashboardData() {
     };
   } catch (error) {
     console.error('Dashboard data error:', error);
-    return { todayAppointments: 0, newClients: 0, returningClients: 0, monthRevenue: 0, upcoming: [] };
+    return { 
+      todayStats: { active: 0, cancelled: 0, completed: 0, total: 0 }, 
+      newClients: 0, 
+      returningClients: 0, 
+      monthRevenue: 0, 
+      upcoming: [] 
+    };
   }
 }
 
@@ -127,8 +136,31 @@ export default async function AdminDashboard() {
             </div>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Сегодня</span>
           </div>
-          <div className="text-4xl md:text-5xl font-black mb-2 tracking-tighter">{data.todayAppointments}</div>
-          <div className="text-zinc-400 text-[9px] font-black uppercase tracking-widest">Записей подтверждено</div>
+          <div className="text-4xl md:text-5xl font-black mb-4 tracking-tighter">{data.todayStats.total}</div>
+          
+          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-zinc-50">
+            <div className="space-y-1">
+              <div className="text-[8px] font-black uppercase text-zinc-300">Активно</div>
+              <div className="text-xs font-black text-blue-500 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
+                {data.todayStats.active}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-[8px] font-black uppercase text-zinc-300">Отмена</div>
+              <div className="text-xs font-black text-red-500 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                {data.todayStats.cancelled}
+              </div>
+            </div>
+            <div className="space-y-1">
+              <div className="text-[8px] font-black uppercase text-zinc-300">Готово</div>
+              <div className="text-xs font-black text-green-500 flex items-center gap-1">
+                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                {data.todayStats.completed}
+              </div>
+            </div>
+          </div>
         </div>
 
         <Link href="/admin/clients" className="bg-white p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">

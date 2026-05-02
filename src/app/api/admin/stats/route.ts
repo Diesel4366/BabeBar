@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
+import { format } from 'date-fns';
 
 export async function GET() {
   try {
-    const today = new Date().toISOString().split('T')[0];
+    const today = format(new Date(), 'yyyy-MM-dd');
     const monthStart = today.substring(0, 7) + '-01';
 
     const [todayRes, clientsRes, revenueRes] = await Promise.all([
