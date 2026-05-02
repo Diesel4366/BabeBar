@@ -1,9 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, Calendar, Clock, LogOut, Settings, X, Sparkles } from 'lucide-react';
+import { ChevronLeft, Calendar, Clock, LogOut, Settings, X, Sparkles, Camera } from 'lucide-react';
 
 interface AppointmentService {
   services: { name: string; price: number; duration_minutes: number } | null;
@@ -49,6 +49,8 @@ export default function ProfilePage() {
   const [cancelId, setCancelId] = useState<string | null>(null);
   const [cancelling, setCancelling] = useState(false);
   const [photoError, setPhotoError] = useState(false);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     async function load() {
@@ -86,6 +88,22 @@ export default function ProfilePage() {
   const allVisits = appointments.filter(a => !a.status.startsWith('cancelled'));
   const totalSpent = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
 
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    const fd = new FormData();
+    fd.append('photo', file);
+    const res = await fetch('/api/user/photo', { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.url) {
+      setUser(u => u ? { ...u, telegram_photo: data.url } : u);
+      setPhotoError(false);
+    }
+    setPhotoUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[#FAFAFA] flex items-center justify-center">
@@ -115,22 +133,43 @@ export default function ProfilePage() {
         {/* User card */}
         <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-8 space-y-6">
           <div className="flex items-center gap-5">
-            {user?.telegram_photo && !photoError ? (
-              <img
-                src={user.telegram_photo}
-                alt=""
-                className="w-16 h-16 rounded-full object-cover flex-shrink-0"
-                style={{ outline: '2px solid #D14D72', outlineOffset: '2px' }}
-                onError={() => setPhotoError(true)}
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              className="relative w-16 h-16 rounded-full flex-shrink-0 group"
+              title="Сменить фото"
+            >
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoUpload}
               />
-            ) : (
-              <div
-                className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-black flex-shrink-0"
-                style={{ backgroundColor: '#D14D72' }}
-              >
-                {user?.name?.[0]?.toUpperCase() ?? '?'}
+              {user?.telegram_photo && !photoError ? (
+                <img
+                  src={user.telegram_photo}
+                  alt=""
+                  className="w-16 h-16 rounded-full object-cover"
+                  style={{ outline: '2px solid #D14D72', outlineOffset: '2px' }}
+                  onError={() => setPhotoError(true)}
+                />
+              ) : (
+                <div
+                  className="w-16 h-16 rounded-full flex items-center justify-center text-white text-2xl font-black"
+                  style={{ backgroundColor: '#D14D72' }}
+                >
+                  {user?.name?.[0]?.toUpperCase() ?? '?'}
+                </div>
+              )}
+              <div className="absolute inset-0 rounded-full flex items-center justify-center transition-opacity opacity-0 group-hover:opacity-100"
+                style={{ backgroundColor: 'rgba(0,0,0,0.45)' }}>
+                {photoUploading
+                  ? <div className="w-5 h-5 border-2 border-white/40 border-t-white rounded-full animate-spin" />
+                  : <Camera size={18} className="text-white" />
+                }
               </div>
-            )}
+            </button>
             <div className="flex-1 min-w-0">
               <div className="font-black text-xl uppercase tracking-tight truncate">{user?.name ?? 'Пользователь'}</div>
               {user?.telegram_username && (
@@ -172,29 +211,21 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Hint: complete profile via bot */}
-        {((!user?.telegram_photo || photoError) || !user?.phone) && (
+        {/* Hint: add phone via bot (only if no phone) */}
+        {!user?.phone && (
           <div className="bg-white rounded-[2rem] border border-zinc-100 p-5 flex items-start gap-4">
             <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-base" style={{ backgroundColor: '#D14D7218' }}>
-              ✨
+              📱
             </div>
-            <div className="space-y-1">
-              <div className="text-xs font-black uppercase tracking-widest">Заполнить профиль</div>
-              <div className="text-zinc-400 text-sm font-medium leading-relaxed">
+            <div>
+              <div className="text-xs font-black uppercase tracking-widest">Добавить телефон</div>
+              <div className="text-zinc-400 text-sm font-medium mt-1 leading-relaxed">
                 Напишите{' '}
                 <a href="https://t.me/BabeBar_bot" target="_blank" rel="noopener noreferrer"
                   className="font-black" style={{ color: '#D14D72' }}>
                   @BabeBar_bot
                 </a>
                 {' '}команду <span className="font-black">/start</span>
-              </div>
-              <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1">
-                {(!user?.telegram_photo || photoError) && (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-300">📸 Фото</span>
-                )}
-                {!user?.phone && (
-                  <span className="text-[10px] font-black uppercase tracking-widest text-zinc-300">📱 Телефон</span>
-                )}
               </div>
             </div>
           </div>

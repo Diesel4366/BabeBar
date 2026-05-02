@@ -1,3 +1,4 @@
+import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { verifyUserToken } from '@/lib/userAuth';
 import { supabaseAdmin } from '@/lib/supabase';
@@ -36,4 +37,38 @@ export async function GET() {
   } catch {
     return new Response(null, { status: 502 });
   }
+}
+
+export async function POST(req: Request) {
+  const store = await cookies();
+  const token = store.get('user_session')?.value;
+  if (!token) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const profileId = await verifyUserToken(token, process.env.ADMIN_SECRET!);
+  if (!profileId) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+  const formData = await req.formData();
+  const file = formData.get('photo') as File | null;
+  if (!file || !file.type.startsWith('image/')) {
+    return NextResponse.json({ error: 'Invalid file' }, { status: 400 });
+  }
+  if (file.size > 5 * 1024 * 1024) {
+    return NextResponse.json({ error: 'File too large (max 5MB)' }, { status: 400 });
+  }
+
+  const buffer = await file.arrayBuffer();
+  const ext = file.type === 'image/png' ? 'png' : 'jpg';
+  const path = `${profileId}.${ext}`;
+
+  const { error } = await supabaseAdmin.storage
+    .from('avatars')
+    .upload(path, buffer, { contentType: file.type, upsert: true });
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  const { data: { publicUrl } } = supabaseAdmin.storage.from('avatars').getPublicUrl(path);
+
+  await supabaseAdmin.from('profiles').update({ telegram_photo: publicUrl }).eq('id', profileId);
+
+  return NextResponse.json({ url: publicUrl });
 }
