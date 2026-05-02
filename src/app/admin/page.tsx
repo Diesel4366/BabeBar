@@ -18,13 +18,11 @@ import { ru } from 'date-fns/locale';
 
 async function getDashboardData() {
   try {
-    // Принудительно используем Московское время (UTC+3)
     const now = new Date();
-    const moscowTimeStr = now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' });
-    const moscowDate = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
-    
-    const today = format(moscowDate, 'yyyy-MM-dd');
-    const monthStart = startOfMonth(moscowDate).toISOString();
+    // Гарантированно получаем дату в формате YYYY-MM-DD по МСК
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(now);
+    const moscowTimeStr = now.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow', hour: '2-digit', minute: '2-digit' });
+    const monthStart = today.substring(0, 7) + '-01';
 
     const [todayActiveRes, todayCancelledRes, todayCompletedRes, monthClientsRes, revenueRes, upcomingRes] = await Promise.all([
       // Статусы на сегодня
@@ -33,73 +31,45 @@ async function getDashboardData() {
       supabaseAdmin.from('appointments').select('*', { count: 'exact', head: true }).eq('date', today).eq('status', 'completed'),
       
       // Клиенты за месяц
-      supabaseAdmin
-        .from('profiles')
-        .select('id, created_at')
-        .gte('created_at', monthStart),
+      supabaseAdmin.from('profiles').select('id, created_at').gte('created_at', monthStart + 'T00:00:00Z'),
 
       // Выручка
-      supabaseAdmin
-        .from('appointments')
-        .select('total_price')
-        .gte('date', today.substring(0, 7) + '-01')
-        .eq('status', 'completed'),
+      supabaseAdmin.from('appointments').select('total_price').gte('date', monthStart).eq('status', 'completed'),
 
-      // Ближайшие записи
-      supabaseAdmin
-        .from('appointments')
-        .select(`
-          id, 
-          start_time, 
-          end_time, 
-          status,
-          total_price,
+      // Записи на сегодня
+      supabaseAdmin.from('appointments').select(`
+          id, start_time, end_time, status, total_price,
           profiles (name, telegram_username, phone),
           appointment_services (services (name))
         `)
         .eq('date', today)
         .order('start_time', { ascending: true })
-        .limit(5)
     ]);
 
     const monthRevenue = revenueRes.data?.reduce((sum, a) => sum + (a.total_price || 0), 0) ?? 0;
-    
-    // Сегментация клиентов
     const newClientsCount = monthClientsRes.data?.length ?? 0;
     
-    // Для "вернувшихся" нужно посчитать тех, кто записался в этом месяце, но был создан раньше
-    const { data: returningClients } = await supabaseAdmin
-      .from('appointments')
-      .select('client_id')
-      .gte('date', today.substring(0, 7) + '-01')
-      .not('client_id', 'is', null);
-    
-    const uniqueClientIds = Array.from(new Set(returningClients?.map(a => a.client_id)));
-    const createdThisMonthIds = new Set(monthClientsRes.data?.map(c => c.id));
-    const returningCount = uniqueClientIds.filter(id => !createdThisMonthIds.has(id)).length;
-
     return {
       todayStats: {
         active: todayActiveRes.count ?? 0,
         cancelled: todayCancelledRes.count ?? 0,
-        completed: todayCompletedRes.count ?? 0,
-        total: (todayActiveRes.count ?? 0) + (todayCompletedRes.count ?? 0)
+        completed: todayCompletedRes.count ?? 0
       },
       newClients: newClientsCount,
-      returningClients: returningCount,
       monthRevenue,
       upcoming: upcomingRes.data as any[] || [],
-      debugServerTime: moscowTimeStr
+      serverTime: moscowTimeStr,
+      today
     };
   } catch (error) {
     console.error('Dashboard data error:', error);
     return { 
-      todayStats: { active: 0, cancelled: 0, completed: 0, total: 0 }, 
+      todayStats: { active: 0, cancelled: 0, completed: 0 }, 
       newClients: 0, 
-      returningClients: 0, 
       monthRevenue: 0, 
       upcoming: [],
-      debugServerTime: new Date().toISOString()
+      serverTime: '--:--',
+      today: ''
     };
   }
 }
@@ -109,6 +79,15 @@ export const dynamic = 'force-dynamic';
 export default async function AdminDashboard() {
   const data = await getDashboardData();
 
+  const getStatusInfo = (status: string) => {
+    switch (status) {
+      case 'active': return { label: 'Ожидается', color: 'text-blue-500', bg: 'bg-blue-500' };
+      case 'completed': return { label: 'Завершено', color: 'text-green-500', bg: 'bg-green-500' };
+      case 'cancelled': return { label: 'Отменено', color: 'text-red-500', bg: 'bg-red-500' };
+      default: return { label: status, color: 'text-zinc-400', bg: 'bg-zinc-400' };
+    }
+  };
+
   return (
     <div className="space-y-8 lg:space-y-12 max-w-full overflow-x-hidden">
       {/* Header */}
@@ -117,14 +96,9 @@ export default async function AdminDashboard() {
           <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-[0.9] mb-3">
             Обзор <span className="text-primary italic">бизнеса</span>
           </h1>
-          <div className="flex flex-col gap-1">
-            <p className="text-zinc-400 font-medium uppercase text-[9px] md:text-[10px] tracking-[0.2em]">
-              Статистика и управление на сегодня
-            </p>
-            <p className="text-[8px] font-black uppercase tracking-widest text-primary/50">
-              Сервер (МСК): {data.debugServerTime}
-            </p>
-          </div>
+          <p className="text-zinc-400 font-medium uppercase text-[9px] md:text-[10px] tracking-[0.2em]">
+            Статистика на {data.today} | МСК: {data.serverTime}
+          </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
           <Link href="/admin/appointments" className="flex items-center justify-center gap-2 px-6 py-4 rounded-2xl bg-white border border-zinc-100 text-[10px] font-black uppercase tracking-widest hover:border-primary transition-all shadow-sm">
@@ -143,33 +117,24 @@ export default async function AdminDashboard() {
         <div className="bg-white p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
           <div className="flex justify-between items-start mb-6">
             <div className="p-3 md:p-4 rounded-2xl bg-blue-50 text-blue-500 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-              <Calendar size={24} className="md:w-7 md:h-7" />
+              <Calendar size={24} />
             </div>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Сегодня</span>
           </div>
-          <div className="text-4xl md:text-5xl font-black mb-4 tracking-tighter">{data.todayStats.total}</div>
           
-          <div className="grid grid-cols-3 gap-2 pt-4 border-t border-zinc-50">
+          <div className="flex items-baseline gap-2 mb-4">
+            <div className="text-4xl md:text-5xl font-black tracking-tighter">{data.todayStats.active}</div>
+            <div className="text-zinc-300 text-xs font-black uppercase">Активных</div>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 pt-6 border-t border-zinc-50">
             <div className="space-y-1">
-              <div className="text-[8px] font-black uppercase text-zinc-300">Активно</div>
-              <div className="text-xs font-black text-blue-500 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-blue-500" />
-                {data.todayStats.active}
-              </div>
+              <div className="text-[8px] font-black uppercase text-zinc-300">Завершено</div>
+              <div className="text-sm font-black text-green-500">{data.todayStats.completed}</div>
             </div>
             <div className="space-y-1">
-              <div className="text-[8px] font-black uppercase text-zinc-300">Отмена</div>
-              <div className="text-xs font-black text-red-500 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                {data.todayStats.cancelled}
-              </div>
-            </div>
-            <div className="space-y-1">
-              <div className="text-[8px] font-black uppercase text-zinc-300">Готово</div>
-              <div className="text-xs font-black text-green-500 flex items-center gap-1">
-                <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                {data.todayStats.completed}
-              </div>
+              <div className="text-[8px] font-black uppercase text-zinc-300">Отменено</div>
+              <div className="text-sm font-black text-red-500">{data.todayStats.cancelled}</div>
             </div>
           </div>
         </div>
@@ -177,21 +142,18 @@ export default async function AdminDashboard() {
         <Link href="/admin/clients" className="bg-white p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
           <div className="flex justify-between items-start mb-6">
             <div className="p-3 md:p-4 rounded-2xl bg-green-50 text-green-500 group-hover:bg-primary group-hover:text-white transition-all duration-500">
-              <Users size={24} className="md:w-7 md:h-7" />
+              <Users size={24} />
             </div>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Клиенты</span>
           </div>
-          <div className="text-4xl md:text-5xl font-black mb-2 tracking-tighter">{data.newClients + data.returningClients}</div>
-          <div className="flex flex-wrap gap-3 text-[8px] md:text-[9px] font-black uppercase tracking-widest">
-            <span className="text-green-500">{data.newClients} Новых</span>
-            <span className="text-blue-500">{data.returningClients} Вернулись</span>
-          </div>
+          <div className="text-4xl md:text-5xl font-black mb-2 tracking-tighter">{data.newClients}</div>
+          <div className="text-zinc-400 text-[9px] font-black uppercase tracking-widest">Новых за месяц</div>
         </Link>
 
         <Link href="/admin/reports/revenue" className="bg-white p-8 md:p-10 rounded-[2rem] md:rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
           <div className="flex justify-between items-start mb-6">
             <div className="p-3 md:p-4 rounded-2xl bg-pink-50 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
-              <TrendingUp size={24} className="md:w-7 md:h-7" />
+              <TrendingUp size={24} />
             </div>
             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">Месяц</span>
           </div>
@@ -219,9 +181,10 @@ export default async function AdminDashboard() {
               data.upcoming.map((appt) => {
                 const profile = appt.profiles as unknown as { name: string; telegram_username?: string } | null;
                 const services = (appt.appointment_services as any[])?.map((s: any) => s.services?.name).filter(Boolean).join(', ');
+                const sInfo = getStatusInfo(appt.status);
 
                 return (
-                  <div key={appt.id} className="bg-white p-5 md:p-6 rounded-[1.8rem] md:rounded-[2rem] border border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:shadow-md transition-all group/item gap-4">
+                  <div key={appt.id} className={`bg-white p-5 md:p-6 rounded-[1.8rem] md:rounded-[2rem] border border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between hover:shadow-md transition-all group/item gap-4 ${appt.status === 'cancelled' ? 'opacity-50' : ''}`}>
                     <div className="flex items-center gap-4 md:gap-6">
                       <div className="text-center min-w-[50px] md:min-w-[60px]">
                         <div className="text-base md:text-lg font-black leading-none">{appt.start_time.substring(0, 5)}</div>
@@ -237,17 +200,22 @@ export default async function AdminDashboard() {
                     <div className="flex items-center justify-between w-full sm:w-auto gap-4">
                       <div className="text-left sm:text-right md:block">
                         <div className="font-black text-sm">{appt.total_price} ₽</div>
-                        <div className={`text-[8px] font-black uppercase tracking-widest ${appt.status === 'active' ? 'text-blue-500' : 'text-green-500'}`}>
-                          {appt.status === 'active' ? 'Ожидается' : 'Завершено'}
+                        <div className={`text-[8px] font-black uppercase tracking-widest ${sInfo.color} flex items-center gap-1 sm:justify-end`}>
+                          <div className={`w-1 h-1 rounded-full ${sInfo.bg}`} />
+                          {sInfo.label}
                         </div>
                       </div>
                       <div className="flex gap-2">
-                        <button className="p-2.5 md:p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors">
-                          <XCircle size={18} />
-                        </button>
-                        <button className="p-2.5 md:p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors">
-                          <CheckCircle2 size={18} />
-                        </button>
+                        {appt.status === 'active' && (
+                          <>
+                            <button className="p-2.5 md:p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors">
+                              <XCircle size={18} />
+                            </button>
+                            <button className="p-2.5 md:p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors">
+                              <CheckCircle2 size={18} />
+                            </button>
+                          </>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -4,8 +4,8 @@ import { format } from 'date-fns';
 
 export async function GET() {
   try {
-    const moscowDate = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Moscow' }));
-    const today = format(moscowDate, 'yyyy-MM-dd');
+    const now = new Date();
+    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Moscow' }).format(now);
     const monthStart = today.substring(0, 7) + '-01';
 
     const [todayRes, clientsRes, revenueRes] = await Promise.all([
