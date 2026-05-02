@@ -90,13 +90,13 @@ export default function AdminAppointments() {
   const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0);
 
   return (
-    <div className="space-y-12">
+    <div className="space-y-8 lg:space-y-12 max-w-full overflow-x-hidden">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
         <div>
-          <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-4">
+          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tighter leading-none mb-3">
             Управление <span className="text-primary italic">записями</span>
           </h1>
-          <p className="text-zinc-400 font-medium uppercase text-[10px] tracking-[0.2em]">
+          <p className="text-zinc-400 font-medium uppercase text-[9px] md:text-[10px] tracking-[0.2em]">
             {filtered.length} из {appointments.length} записей в базе
           </p>
         </div>
@@ -104,27 +104,27 @@ export default function AdminAppointments() {
 
       {/* Search & Filters */}
       <div className="flex flex-col gap-4">
-        <div className="flex gap-4">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-300" size={20} />
+            <Search className="absolute left-5 top-1/2 -translate-y-1/2 text-zinc-300" size={18} />
             <input
               type="text"
-              placeholder="Поиск по имени или телефону..."
+              placeholder="Поиск..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
-              className="w-full bg-white pl-16 pr-8 py-5 rounded-2xl border border-zinc-100 focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold text-sm outline-none transition-all shadow-sm"
+              className="w-full bg-white pl-14 pr-6 py-4 rounded-2xl border border-zinc-100 focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold text-sm outline-none transition-all shadow-sm"
             />
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`bg-white border px-8 py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] flex items-center gap-3 transition-all relative shadow-sm ${
+            className={`bg-white border px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[9px] flex items-center justify-center gap-3 transition-all relative shadow-sm h-[54px] sm:h-auto ${
               showFilters || activeFiltersCount > 0 ? 'border-primary text-primary' : 'border-zinc-100 hover:border-zinc-300'
             }`}
           >
-            <Filter size={16} />
+            <Filter size={14} />
             Фильтры
             {activeFiltersCount > 0 && (
-              <span className="absolute -top-2 -right-2 w-5 h-5 bg-primary text-white text-[9px] font-black rounded-full flex items-center justify-center">
+              <span className="absolute -top-1 -right-1 w-4 h-4 bg-primary text-white text-[8px] font-black rounded-full flex items-center justify-center">
                 {activeFiltersCount}
               </span>
             )}
@@ -139,15 +139,15 @@ export default function AdminAppointments() {
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="bg-white rounded-[2rem] border border-zinc-100 p-8 space-y-6 shadow-sm">
+              <div className="bg-white rounded-[1.8rem] border border-zinc-100 p-6 md:p-8 space-y-6 shadow-sm">
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Статус записи</div>
+                  <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-3">Статус записи</div>
                   <div className="flex flex-wrap gap-2">
                     {(['all', 'active', 'completed', 'cancelled_by_admin', 'cancelled_by_client'] as const).map(s => (
                       <button
                         key={s}
                         onClick={() => setStatusFilter(s)}
-                        className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                        className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
                           statusFilter === s ? 'bg-[#0A0A0A] text-white shadow-lg shadow-black/10' : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
                         }`}
                       >
@@ -158,13 +158,13 @@ export default function AdminAppointments() {
                 </div>
 
                 <div>
-                  <div className="text-[10px] font-black uppercase tracking-widest text-zinc-400 mb-4">Временной период</div>
-                  <div className="flex gap-2">
-                    {([['all', 'За всё время'], ['today', 'Сегодня'], ['week', 'Эта неделя']] as const).map(([val, label]) => (
+                  <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-3">Период</div>
+                  <div className="flex flex-wrap gap-2">
+                    {([['all', 'За всё время'], ['today', 'Сегодня'], ['week', 'Неделя']] as const).map(([val, label]) => (
                       <button
                         key={val}
                         onClick={() => setDateFilter(val)}
-                        className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${
+                        className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
                           dateFilter === val ? 'bg-[#0A0A0A] text-white shadow-lg shadow-black/10' : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
                         }`}
                       >
@@ -177,10 +177,10 @@ export default function AdminAppointments() {
                 {activeFiltersCount > 0 && (
                   <button
                     onClick={() => { setStatusFilter('all'); setDateFilter('all'); }}
-                    className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 transition-colors pt-2"
+                    className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 transition-colors pt-1"
                   >
-                    <X size={14} />
-                    Сбросить все фильтры
+                    <X size={12} />
+                    Сбросить всё
                   </button>
                 )}
               </div>
@@ -191,89 +191,90 @@ export default function AdminAppointments() {
 
       {isLoading ? (
         <div className="flex justify-center py-32">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-primary" />
+          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 gap-4 md:gap-6">
           {filtered.length > 0 ? (
             filtered.map((app, i) => (
               <motion.div
                 key={app.id}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.04 }}
-                className="bg-white rounded-[2.5rem] border border-zinc-100 p-10 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group"
+                transition={{ delay: i * 0.03 }}
+                className="bg-white rounded-[2rem] border border-zinc-100 p-6 md:p-10 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group"
               >
-                <div className="flex flex-col lg:flex-row justify-between gap-10">
-                  <div className="flex gap-8 items-start">
-                    <div className="w-20 h-20 bg-zinc-50 rounded-3xl flex items-center justify-center text-zinc-400 flex-shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
-                      <User size={32} />
+                <div className="flex flex-col lg:flex-row justify-between gap-6 md:gap-10">
+                  <div className="flex gap-4 md:gap-8 items-start">
+                    <div className="w-12 h-12 md:w-20 md:h-20 bg-zinc-50 rounded-2xl md:rounded-3xl flex items-center justify-center text-zinc-400 flex-shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
+                      <User size={24} className="md:w-8 md:h-8" />
                     </div>
-                    <div>
-                      <div className="flex items-center gap-4 mb-3">
-                        <h3 className="text-2xl font-black uppercase tracking-tight text-[#0A0A0A] leading-none">{app.client?.name || 'Без имени'}</h3>
-                        <span className={`px-4 py-1.5 rounded-full text-[9px] font-black uppercase border shadow-sm ${STATUS_COLORS[app.status]}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex flex-wrap items-center gap-3 mb-2">
+                        <h3 className="text-lg md:text-2xl font-black uppercase tracking-tight text-[#0A0A0A] leading-none truncate max-w-[200px] md:max-w-none">
+                          {app.client?.name || 'Без имени'}
+                        </h3>
+                        <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border shadow-sm ${STATUS_COLORS[app.status]}`}>
                           {STATUS_LABELS[app.status]}
                         </span>
                       </div>
-                      <div className="flex flex-wrap gap-6 text-xs font-bold text-zinc-400">
-                        <div className="flex items-center gap-2">
-                          <Phone size={14} className="text-primary" />
-                          <span className="text-[#0A0A0A]">{app.client?.phone || '—'}</span>
+                      <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] md:text-xs font-bold text-zinc-400">
+                        <div className="flex items-center gap-1.5">
+                          <Phone size={12} className="text-primary" />
+                          <span className="text-[#0A0A0A] whitespace-nowrap">{app.client?.phone || '—'}</span>
                         </div>
                         {app.client?.telegram_username && (
                           <a
                             href={`https://t.me/${app.client.telegram_username}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="flex items-center gap-2 transition-all hover:scale-105"
-                            style={{ color: '#2AABEE' }}
+                            className="flex items-center gap-1.5 transition-all hover:scale-105 text-[#2AABEE]"
                           >
-                            <Send size={13} />
-                            @{app.client.telegram_username}
+                            <Send size={12} />
+                            <span className="truncate max-w-[100px]">@{app.client.telegram_username}</span>
                           </a>
                         )}
-                        <div className="flex items-center gap-2">
-                          <Calendar size={14} className="text-primary" />
-                          <span className="uppercase tracking-widest">{new Date(app.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Calendar size={12} className="text-primary" />
+                          <span className="uppercase tracking-tight whitespace-nowrap">{new Date(app.date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                          <Clock size={14} className="text-primary" />
-                          <span className="font-black text-[#0A0A0A]">{app.startTime.substring(0, 5)} — {app.endTime.substring(0, 5)}</span>
+                        <div className="flex items-center gap-1.5">
+                          <Clock size={12} className="text-primary" />
+                          <span className="font-black text-[#0A0A0A] whitespace-nowrap">{app.startTime.substring(0, 5)}—{app.endTime.substring(0, 5)}</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex flex-col md:flex-row items-start md:items-center gap-10 lg:text-right">
-                    <div className="flex-1">
-                      <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-3">Услуги</div>
-                      <div className="text-sm font-black text-[#0A0A0A] uppercase tracking-tight italic">
+                  <div className="flex flex-col md:flex-row items-start md:items-center gap-6 lg:text-right border-t border-zinc-50 pt-6 lg:border-t-0 lg:pt-0">
+                    <div className="flex-1 min-w-0">
+                      <div className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-2">Услуги</div>
+                      <div className="text-xs md:text-sm font-black text-[#0A0A0A] uppercase tracking-tight italic line-clamp-1">
                         {app.services?.map(s => s.name).join(', ')}
                       </div>
                     </div>
                     <div className="flex-shrink-0">
-                      <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-3">Сумма</div>
-                      <div className="text-3xl font-black text-primary leading-none">{app.totalPrice} ₽</div>
+                      <div className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-2">Сумма</div>
+                      <div className="text-2xl md:text-3xl font-black text-primary leading-none">{app.totalPrice} ₽</div>
                     </div>
                   </div>
 
-                  <div className="flex gap-3 border-t lg:border-t-0 lg:border-l border-zinc-50 pt-8 lg:pt-0 lg:pl-10">
+                  <div className="flex gap-2 border-t lg:border-t-0 lg:border-l border-zinc-50 pt-6 lg:pt-0 lg:pl-10">
                     {app.status === 'active' && (
                       <>
                         <button
                           onClick={() => updateStatus(app.id, 'completed')}
-                          className="flex-1 lg:flex-none bg-green-500 hover:bg-green-600 text-white px-8 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
+                          className="flex-1 lg:flex-none bg-green-500 hover:bg-green-600 text-white px-5 md:px-8 py-4 rounded-xl md:rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all shadow-lg shadow-green-500/20 flex items-center justify-center gap-2"
                         >
                           <CheckCircle2 size={16} />
-                          Готово
+                          <span className="hidden sm:inline">Готово</span>
                         </button>
                         <button
                           onClick={() => updateStatus(app.id, 'cancelled_by_admin')}
-                          className="flex-1 lg:flex-none bg-red-50 hover:bg-red-100 text-red-500 px-8 py-5 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+                          className="flex-1 lg:flex-none bg-red-50 hover:bg-red-100 text-red-500 px-5 md:px-8 py-4 rounded-xl md:rounded-2xl text-[9px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-2"
                         >
                           <XCircle size={16} />
-                          Отмена
+                          <span className="hidden sm:inline">Отмена</span>
                         </button>
                       </>
                     )}
@@ -282,13 +283,13 @@ export default function AdminAppointments() {
               </motion.div>
             ))
           ) : (
-            <div className="py-40 text-center bg-white rounded-[3rem] border border-zinc-100 border-dashed">
-              <div className="w-24 h-24 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-200 mx-auto mb-8">
-                <Calendar size={48} />
+            <div className="py-32 text-center bg-white rounded-[2.5rem] border border-zinc-100 border-dashed">
+              <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-200 mx-auto mb-6">
+                <Calendar size={32} />
               </div>
-              <h3 className="text-2xl font-black uppercase tracking-tight text-zinc-400 mb-3">Записей не найдено</h3>
-              <p className="text-zinc-300 font-medium text-sm italic">
-                {activeFiltersCount > 0 || searchTerm ? 'Попробуйте сбросить фильтры' : 'Все визиты клиентов будут отображаться здесь'}
+              <h3 className="text-xl font-black uppercase tracking-tight text-zinc-400 mb-2">Записей нет</h3>
+              <p className="text-zinc-300 font-medium text-xs italic px-10">
+                {activeFiltersCount > 0 || searchTerm ? 'Попробуйте сбросить фильтры' : 'Все визиты клиентов появятся здесь'}
               </p>
             </div>
           )}
