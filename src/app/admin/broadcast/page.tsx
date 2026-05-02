@@ -112,7 +112,7 @@ export default function BroadcastPage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-4">
-          Массовая <span className="text-primary italic">рассылка</span>
+          Массовая <span style={{ color: '#D14D72' }} className="italic">рассылка</span>
         </h1>
         <p className="text-zinc-400 font-medium uppercase text-[10px] tracking-[0.2em]">
           Отправка сообщений клиентам в Telegram
@@ -124,7 +124,7 @@ export default function BroadcastPage() {
         <div className="space-y-8">
           <div className="bg-white rounded-[2.5rem] border border-zinc-100 p-10 shadow-sm">
             <h2 className="text-xl font-black uppercase tracking-tight mb-8 flex items-center gap-3">
-              <Send size={24} className="text-primary" />
+              <Send size={24} style={{ color: '#D14D72' }} />
               Сообщение
             </h2>
             
@@ -177,11 +177,12 @@ export default function BroadcastPage() {
               <button
                 onClick={handleSend}
                 disabled={isSending || !message.trim() || selectedIds.length === 0}
+                style={!(isSending || !message.trim() || selectedIds.length === 0) ? { backgroundColor: '#D14D72' } : {}}
                 className={`
                   w-full py-6 rounded-3xl flex items-center justify-center gap-3 text-sm font-black uppercase tracking-widest transition-all
                   ${isSending || !message.trim() || selectedIds.length === 0
                     ? 'bg-zinc-100 text-zinc-400 cursor-not-allowed'
-                    : 'bg-primary text-white shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98]'}
+                    : 'text-white shadow-xl shadow-[#D14D72]/20 hover:scale-[1.02] active:scale-[0.98]'}
                 `}
               >
                 {isSending ? (
@@ -205,12 +206,13 @@ export default function BroadcastPage() {
           <div className="bg-white rounded-[2.5rem] border border-zinc-100 p-10 shadow-sm flex flex-col h-[800px]">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-xl font-black uppercase tracking-tight flex items-center gap-3">
-                <Users size={24} className="text-primary" />
+                <Users size={24} style={{ color: '#D14D72' }} />
                 Получатели
               </h2>
               <button 
                 onClick={toggleSelectAll}
-                className="text-[10px] font-black uppercase tracking-widest text-primary hover:opacity-70 transition-opacity"
+                style={{ color: '#D14D72' }}
+                className="text-[10px] font-black uppercase tracking-widest hover:opacity-70 transition-opacity"
               >
                 {selectedIds.length === filteredClients.length ? 'Снять всё' : 'Выбрать всех'}
               </button>
@@ -230,7 +232,7 @@ export default function BroadcastPage() {
             <div className="flex-1 overflow-y-auto pr-2 space-y-3 custom-scrollbar">
               {isLoading ? (
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-zinc-400">
-                  <Loader2 size={32} className="animate-spin text-primary" />
+                  <Loader2 size={32} className="animate-spin" style={{ color: '#D14D72' }} />
                   <span className="text-[10px] font-black uppercase tracking-widest">Загрузка базы...</span>
                 </div>
               ) : filteredClients.length > 0 ? (
@@ -243,15 +245,17 @@ export default function BroadcastPage() {
                       className={`
                         p-5 rounded-2xl border transition-all cursor-pointer flex items-center justify-between group
                         ${isSelected 
-                          ? 'bg-primary/5 border-primary/20 shadow-sm' 
+                          ? 'bg-zinc-50 border-[#D14D72]/20 shadow-sm' 
                           : 'bg-white border-zinc-100 hover:border-zinc-200'}
                       `}
                     >
                       <div className="flex items-center gap-4">
                         <div className={`
                           w-12 h-12 rounded-xl flex items-center justify-center transition-colors
-                          ${isSelected ? 'bg-primary text-white' : 'bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100'}
-                        `}>
+                          ${isSelected ? 'text-white' : 'bg-zinc-50 text-zinc-400 group-hover:bg-zinc-100'}
+                        `}
+                        style={isSelected ? { backgroundColor: '#D14D72' } : {}}
+                        >
                           {isSelected ? <CheckSquare size={20} /> : <Square size={20} />}
                         </div>
                         <div>
@@ -307,17 +311,4 @@ export default function BroadcastPage() {
       `}</style>
     </div>
   );
-}
-  </div>
-  );
-}
-  </div>
-  );
-}
-         background: #e4e4e7;
-        }
-      `}</style>
-    </div>
-  );
-}
 }
