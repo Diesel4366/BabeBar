@@ -283,7 +283,7 @@ export default function BroadcastPage() {
             </div>
             
             <div className="mt-8 pt-8 border-t border-zinc-100 flex justify-between items-center text-[10px] font-black uppercase tracking-widest text-zinc-400">
-              <span>Выбрано: <span className="text-primary">{selectedIds.length}</span></span>
+              <span>Выбрано: <span style={{ color: '#D14D72' }}>{selectedIds.length}</span></span>
               <span>Всего с TG: <span className="text-zinc-900">{clients.length}</span></span>
             </div>
           </div>
@@ -307,4 +307,17 @@ export default function BroadcastPage() {
       `}</style>
     </div>
   );
+}
+  </div>
+  );
+}
+  </div>
+  );
+}
+         background: #e4e4e7;
+        }
+      `}</style>
+    </div>
+  );
+}
 }
