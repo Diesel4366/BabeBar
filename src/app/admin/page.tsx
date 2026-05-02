@@ -131,7 +131,7 @@ export default async function AdminDashboard() {
           <div className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">Записей подтверждено</div>
         </div>
 
-        <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
+        <Link href="/admin/clients" className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
           <div className="flex justify-between items-start mb-6">
             <div className="p-4 rounded-2xl bg-green-50 text-green-500 group-hover:bg-primary group-hover:text-white transition-all duration-500">
               <Users size={28} />
@@ -143,9 +143,9 @@ export default async function AdminDashboard() {
             <span className="text-green-500">{data.newClients} Новых</span>
             <span className="text-blue-500">{data.returningClients} Вернулись</span>
           </div>
-        </div>
+        </Link>
 
-        <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
+        <Link href="/admin/reports/revenue" className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 shadow-sm group hover:border-primary transition-all duration-500">
           <div className="flex justify-between items-start mb-6">
             <div className="p-4 rounded-2xl bg-pink-50 text-primary group-hover:bg-primary group-hover:text-white transition-all duration-500">
               <TrendingUp size={28} />
@@ -153,8 +153,11 @@ export default async function AdminDashboard() {
             <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400">Месяц</span>
           </div>
           <div className="text-5xl font-black mb-2 tracking-tighter">{data.monthRevenue.toLocaleString('ru-RU')} ₽</div>
-          <div className="text-zinc-400 text-[10px] font-black uppercase tracking-widest">Выручка (завершенные)</div>
-        </div>
+          <div className="text-zinc-400 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
+            Выручка (завершенные)
+            <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+          </div>
+        </Link>
       </div>
 
       {/* Main Content Grid */}
@@ -171,7 +174,7 @@ export default async function AdminDashboard() {
           <div className="space-y-4">
             {data.upcoming.length > 0 ? (
               data.upcoming.map((appt) => (
-                <div key={appt.id} className="bg-white p-6 rounded-[2rem] border border-zinc-100 flex items-center justify-between hover:shadow-md transition-all">
+                <div key={appt.id} className="bg-white p-6 rounded-[2rem] border border-zinc-100 flex items-center justify-between hover:shadow-md transition-all group/item">
                   <div className="flex items-center gap-6">
                     <div className="text-center min-w-[60px]">
                       <div className="text-lg font-black leading-none">{appt.start_time.substring(0, 5)}</div>
@@ -179,23 +182,23 @@ export default async function AdminDashboard() {
                     </div>
                     <div className="h-10 w-[1px] bg-zinc-100" />
                     <div>
-                      <div className="font-black text-sm uppercase tracking-tight">{appt.profiles?.name || 'Клиент'}</div>
-                      <div className="text-[10px] text-zinc-400 font-medium">{appt.appointment_services?.[0]?.services?.name || 'Услуга'}</div>
+                      <div className="font-black text-sm uppercase tracking-tight text-[#0A0A0A]">{appt.profiles?.name || 'Клиент'}</div>
+                      <div className="text-[10px] text-zinc-400 font-medium italic">{appt.appointment_services?.[0]?.services?.name || 'Услуга'}</div>
                     </div>
                   </div>
                   
                   <div className="flex items-center gap-4">
-                    <div className="text-right mr-4">
+                    <div className="text-right mr-4 hidden md:block">
                       <div className="font-black text-sm">{appt.total_price} ₽</div>
-                      <div className={`text-[10px] font-bold uppercase tracking-widest ${appt.status === 'active' ? 'text-green-500' : 'text-zinc-400'}`}>
-                        {appt.status === 'active' ? 'Активна' : 'Завершена'}
+                      <div className={`text-[9px] font-black uppercase tracking-widest ${appt.status === 'active' ? 'text-blue-500' : 'text-green-500'}`}>
+                        {appt.status === 'active' ? 'Ожидается' : 'Завершено'}
                       </div>
                     </div>
                     <div className="flex gap-2">
-                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors">
+                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-red-500 transition-colors" title="Отменить">
                         <XCircle size={18} />
                       </button>
-                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors">
+                      <button className="p-3 rounded-xl bg-zinc-50 text-zinc-400 hover:text-green-500 transition-colors" title="Завершить">
                         <CheckCircle2 size={18} />
                       </button>
                     </div>
@@ -207,41 +210,45 @@ export default async function AdminDashboard() {
                 <div className="w-16 h-16 bg-zinc-50 rounded-full flex items-center justify-center mx-auto text-zinc-300">
                   <Clock size={32} />
                 </div>
-                <p className="text-zinc-400 text-xs font-medium uppercase tracking-widest">На сегодня записей пока нет</p>
+                <p className="text-zinc-400 text-xs font-black uppercase tracking-[0.2em]">На сегодня записей пока нет</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* Side Panel: Quick Status */}
+        {/* Side Panel: Team & Support */}
         <div className="space-y-8">
-           <div className="bg-[#0A0A0A] p-10 rounded-[2.5rem] text-white space-y-8 relative overflow-hidden group">
+           <div className="bg-[#0A0A0A] p-10 rounded-[2.5rem] text-white space-y-10 relative overflow-hidden group">
              <div className="relative z-10">
-               <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Статус <span className="text-primary italic">студии</span></h3>
-               <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-8">Оперативное управление</p>
+               <h3 className="text-2xl font-black uppercase tracking-tighter mb-2">Команда <span className="text-primary italic">BabeBar</span></h3>
+               <p className="text-zinc-500 text-[10px] font-black uppercase tracking-widest mb-10">Управление ролями</p>
                
-               <div className="space-y-6">
-                 <div className="flex justify-between items-center">
-                   <span className="text-xs font-bold uppercase text-zinc-400">Онлайн-запись</span>
-                   <div className="w-12 h-6 bg-green-500 rounded-full relative p-1">
-                     <div className="w-4 h-4 bg-white rounded-full ml-auto" />
+               <div className="space-y-8">
+                 <div className="flex justify-between items-center group/member">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center text-primary text-[10px] font-black italic">M</div>
+                     <span className="text-xs font-bold uppercase text-zinc-200">Мастер (1)</span>
                    </div>
+                   <div className="px-3 py-1 rounded-full bg-green-500/10 text-green-500 text-[9px] font-black uppercase border border-green-500/20">На смене</div>
                  </div>
-                 <div className="flex justify-between items-center text-zinc-400">
-                   <span className="text-xs font-bold uppercase">Мастера на смене</span>
-                   <span className="text-sm font-black text-white">2</span>
+                 <div className="flex justify-between items-center group/member border-t border-white/5 pt-8">
+                   <div className="flex items-center gap-3">
+                     <div className="w-8 h-8 rounded-full bg-zinc-800 border border-zinc-700 flex items-center justify-center text-zinc-400 text-[10px] font-black">A</div>
+                     <span className="text-xs font-bold uppercase text-zinc-400">Админы (2)</span>
+                   </div>
+                   <span className="text-[10px] font-black text-zinc-600 uppercase tracking-widest">Active</span>
                  </div>
                </div>
              </div>
              {/* Decor */}
-             <div className="absolute -bottom-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl group-hover:bg-primary/20 transition-all duration-700" />
+             <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-primary/5 rounded-full blur-[100px] group-hover:bg-primary/10 transition-all duration-1000" />
            </div>
 
-           <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 space-y-6">
-             <h3 className="text-sm font-black uppercase tracking-widest">Поддержка</h3>
-             <p className="text-zinc-400 text-xs leading-relaxed font-medium">Нужна помощь с настройкой расписания или добавлением услуг?</p>
-             <button className="w-full py-4 rounded-2xl bg-zinc-50 text-[10px] font-black uppercase tracking-widest hover:bg-zinc-100 transition-all flex items-center justify-center gap-2">
-               Написать в поддержку
+           <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 space-y-6 shadow-sm hover:border-primary transition-all group">
+             <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-primary transition-colors">Помощь в управлении</h3>
+             <p className="text-zinc-400 text-xs leading-relaxed font-medium italic">Нужно добавить новую категорию услуг или настроить уведомления для мастеров?</p>
+             <button className="w-full py-5 rounded-2xl bg-zinc-50 text-[10px] font-black uppercase tracking-widest hover:bg-[#0A0A0A] hover:text-white transition-all flex items-center justify-center gap-2">
+               Техподдержка
                <ExternalLink size={14} />
              </button>
            </div>
