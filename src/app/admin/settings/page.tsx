@@ -121,22 +121,21 @@ export default function AdminSettings() {
   };
 
   return (
-    <div className="bg-[#FAFAFA] min-h-screen pt-24 pb-12">
-      <div className="container-custom max-w-xl">
-
-        {/* Header */}
-        <div className="flex items-center gap-6 mb-10">
-          <Link href="/admin" className="w-10 h-10 flex items-center justify-center bg-white border border-zinc-100 rounded-full hover:bg-zinc-50 transition-colors">
-            <ChevronLeft size={20} />
-          </Link>
-          <div>
-            <h1 className="text-3xl font-black text-[#0A0A0A] mb-1 tracking-tight uppercase">Расписание</h1>
-            <p className="text-zinc-400 font-medium text-sm">Отмечай рабочие дни на календаре</p>
-          </div>
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-4">
+            Рабочее <span className="text-primary italic">расписание</span>
+          </h1>
+          <p className="text-zinc-400 font-medium uppercase text-[10px] tracking-[0.2em]">
+            Управление рабочими днями и выходными
+          </p>
         </div>
+      </div>
 
+      <div className="max-w-xl mx-auto space-y-8">
         {/* Legend */}
-        <div className="flex gap-6 mb-6 px-1">
+        <div className="flex gap-6 px-1">
           <div className="flex items-center gap-2">
             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: '#D14D72' }} />
             <span className="text-xs font-bold text-zinc-400 uppercase tracking-widest">Рабочий</span>

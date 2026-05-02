@@ -91,22 +91,20 @@ export default function AdminAppointments() {
   const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0);
 
   return (
-    <div className="bg-[#FAFAFA] min-h-screen pt-24 pb-12">
-      <div className="container-custom">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-12 gap-6">
-          <div className="flex items-center gap-6">
-            <Link href="/admin" className="w-10 h-10 flex items-center justify-center bg-white border border-zinc-100 rounded-full hover:bg-zinc-50 transition-colors">
-              <ChevronLeft size={20} />
-            </Link>
-            <div>
-              <h1 className="text-3xl font-black text-[#0A0A0A] mb-2 tracking-tight uppercase">Записи</h1>
-              <p className="text-zinc-500 font-medium text-sm">{filtered.length} из {appointments.length}</p>
-            </div>
-          </div>
+    <div className="space-y-12">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+        <div>
+          <h1 className="text-5xl font-black uppercase tracking-tighter leading-none mb-4">
+            Управление <span className="text-primary italic">записями</span>
+          </h1>
+          <p className="text-zinc-400 font-medium uppercase text-[10px] tracking-[0.2em]">
+            {filtered.length} из {appointments.length} записей в базе
+          </p>
         </div>
+      </div>
 
-        {/* Search & Filters */}
-        <div className="flex flex-col gap-4 mb-10">
+      {/* Search & Filters */}
+      <div className="flex flex-col gap-4">
           <div className="flex gap-4">
             <div className="relative flex-1">
               <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-zinc-300" size={20} />

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { LogOut } from 'lucide-react';
 
-export default function LogoutButton() {
+export default function LogoutButton({ isSidebar }: { isSidebar?: boolean }) {
   const router = useRouter();
 
   const handleLogout = async () => {
@@ -11,6 +11,18 @@ export default function LogoutButton() {
     router.push('/admin/login');
     router.refresh();
   };
+
+  if (isSidebar) {
+    return (
+      <button
+        onClick={handleLogout}
+        className="flex items-center justify-between w-full px-6 py-4 rounded-2xl bg-red-500/10 text-red-500 hover:bg-red-500 hover:text-white transition-all text-[10px] font-black uppercase tracking-widest group"
+      >
+        Выйти
+        <LogOut size={16} className="group-hover:rotate-12 transition-transform" />
+      </button>
+    );
+  }
 
   return (
     <button
@@ -22,3 +34,4 @@ export default function LogoutButton() {
     </button>
   );
 }
+
