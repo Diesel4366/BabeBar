@@ -475,9 +475,15 @@ export async function POST(req: Request) {
         );
 
         // Уведомление мастерам
-        await notifyAdmins(
-          `🌟 *Новая запись (бот)!*\n\n👤 *Клиент:* ${profile.name ?? 'Без имени'}\n📞 *Телефон:* ${profile.phone ?? '—'}\n📅 *Дата:* ${dateDisplay}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуга:* ${service.name}\n💰 *Сумма:* ${service.price} ₽`
-        );
+        let adminMsg = `🌟 *Новая запись (бот)!*\n\n👤 *Клиент:* ${profile.name ?? 'Без имени'}\n📞 *Телефон:* ${profile.phone ?? '—'}`;
+        
+        if (profile.telegram_username) {
+          adminMsg += `\n✈️ *Telegram:* @${profile.telegram_username}`;
+        }
+        
+        adminMsg += `\n📅 *Дата:* ${dateDisplay}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуга:* ${service.name}\n💰 *Сумма:* ${service.price} ₽`;
+
+        await notifyAdmins(adminMsg);
       }
 
       // Мои записи

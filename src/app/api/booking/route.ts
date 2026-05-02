@@ -118,10 +118,24 @@ export async function POST(req: Request) {
     const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
 
     if (telegramToken && chatIds.length > 0) {
+      // Получаем username клиента
+      const { data: profile } = await supabaseAdmin
+        .from('profiles')
+        .select('telegram_username')
+        .eq('id', profileId)
+        .single();
+
       const dateFormatted = new Date(formattedDate + 'T12:00:00').toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'long', weekday: 'long',
       });
-      const message = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${services.map((s: Service) => s.name).join(', ')}\n💰 *Сумма:* ${totalPrice} ₽`;
+      
+      let message = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}`;
+      
+      if (profile?.telegram_username) {
+        message += `\n✈️ *Telegram:* @${profile.telegram_username}`;
+      }
+      
+      message += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${services.map((s: Service) => s.name).join(', ')}\n💰 *Сумма:* ${totalPrice} ₽`;
 
       await Promise.allSettled(chatIds.map(chatId =>
         fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
