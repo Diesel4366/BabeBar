@@ -40,7 +40,7 @@ export async function GET(req: Request) {
   if (code) {
     const userData = await exchangeTelegramCode(code);
     if (!userData) return fail('Code exchange failed');
-    const photoUrl = await fetchBotApiPhoto(userData.id) || userData.photo_url || '';
+    const photoUrl = userData.photo_url || '';
     tgData = {
       id: userData.id,
       first_name: userData.first_name,

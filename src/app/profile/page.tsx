@@ -115,7 +115,7 @@ export default function ProfilePage() {
           <div className="flex items-center gap-5">
             {user?.telegram_photo && !photoError ? (
               <img
-                src={user.telegram_photo}
+                src="/api/user/photo"
                 alt=""
                 className="w-16 h-16 rounded-full object-cover flex-shrink-0"
                 style={{ outline: '2px solid #D14D72', outlineOffset: '2px' }}
