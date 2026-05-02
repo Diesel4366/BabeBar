@@ -136,6 +136,9 @@ export default function ProfilePage() {
               {user?.telegram_username && (
                 <div className="text-zinc-400 font-medium text-sm">@{user.telegram_username}</div>
               )}
+              {user?.phone && (
+                <div className="text-zinc-400 font-medium text-sm">{user.phone}</div>
+              )}
             </div>
             {user?.isAdmin && (
               <Link
