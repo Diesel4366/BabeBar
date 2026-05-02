@@ -252,10 +252,15 @@ export default async function AdminDashboard() {
            <div className="bg-white p-10 rounded-[2.5rem] border border-zinc-100 space-y-6 shadow-sm hover:border-primary transition-all group">
              <h3 className="text-xs font-black uppercase tracking-widest text-zinc-400 group-hover:text-primary transition-colors">Помощь в управлении</h3>
              <p className="text-zinc-400 text-xs leading-relaxed font-medium italic">Нужно добавить новую категорию услуг или настроить уведомления для мастеров?</p>
-             <button className="w-full py-5 rounded-2xl bg-zinc-50 text-[10px] font-black uppercase tracking-widest hover:bg-[#0A0A0A] hover:text-white transition-all flex items-center justify-center gap-2">
+             <a 
+               href="https://t.me/persik4366" 
+               target="_blank" 
+               rel="noopener noreferrer"
+               className="w-full py-5 rounded-2xl bg-zinc-50 text-[10px] font-black uppercase tracking-widest hover:bg-[#0A0A0A] hover:text-white transition-all flex items-center justify-center gap-2"
+             >
                Техподдержка
                <ExternalLink size={14} />
-             </button>
+             </a>
            </div>
         </div>
       </div>
