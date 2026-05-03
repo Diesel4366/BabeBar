@@ -5,7 +5,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { Service } from '@/types';
 import { CATEGORY_ORDER } from '@/lib/config';
-import { Plus, Trash2, Edit2, Clock, X, Check, Package, Leaf } from 'lucide-react';
+import { Plus, Trash2, Edit2, Clock, X, Check, Package, Leaf, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 type ServiceForm = Omit<Service, 'id' | 'created_at'>;
@@ -15,6 +15,21 @@ interface ServiceMaterial {
   amount: number;
   material_id: string;
   inventory_items: { id: string; name: string; unit: string };
+}
+
+interface ServiceCostLine {
+  material_id: string;
+  name: string;
+  unit: string;
+  amount: number;
+  avg_cost_per_unit: number;
+  subtotal: number;
+}
+
+interface ServiceCost {
+  service_id: string;
+  material_cost: number;
+  lines: ServiceCostLine[];
 }
 
 const EMPTY_FORM: ServiceForm = {
@@ -37,7 +52,8 @@ export default function AdminServices() {
   const [form, setForm] = useState<ServiceForm>(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  
+  const [costs, setCosts] = useState<Map<string, ServiceCost>>(new Map());
+
   // Materials state
   const [serviceMaterials, setServiceMaterials] = useState<ServiceMaterial[]>([]);
   const [allMaterials, setAllMaterials] = useState<{ id: string; name: string; unit: string }[]>([]);
@@ -47,9 +63,14 @@ export default function AdminServices() {
   const fetchServices = useCallback(async () => {
     setIsLoading(true);
     try {
-      const res = await fetch('/api/admin/services');
-      const data = await res.json();
+      const [sRes, cRes] = await Promise.all([
+        fetch('/api/admin/services'),
+        fetch('/api/admin/services/costs'),
+      ]);
+      const data = await sRes.json();
       if (Array.isArray(data)) setServices(data);
+      const costData: ServiceCost[] = cRes.ok ? await cRes.json() : [];
+      setCosts(new Map(costData.map(c => [c.service_id, c])));
     } catch { /* silent */ }
     setIsLoading(false);
   }, []);
@@ -198,7 +219,7 @@ export default function AdminServices() {
                   {service.description || 'Описание не добавлено'}
                 </p>
 
-                <div className="flex justify-between items-center bg-zinc-50/50 border border-zinc-100 p-5 rounded-3xl mb-8">
+                <div className="flex justify-between items-center bg-zinc-50/50 border border-zinc-100 p-5 rounded-3xl mb-4">
                   <div className="flex items-center gap-2 text-zinc-400 font-black text-[9px] uppercase tracking-widest">
                     <Clock size={14} style={{ color: '#D14D72' }} />
                     <span>{service.duration_minutes} мин</span>
@@ -207,6 +228,26 @@ export default function AdminServices() {
                     {service.price > 0 ? `${service.price} ₽` : '0 ₽'}
                   </div>
                 </div>
+
+                {(() => {
+                  const cost = costs.get(service.id);
+                  if (!cost || cost.material_cost === 0) return null;
+                  const margin = service.price > 0 ? Math.round((1 - cost.material_cost / service.price) * 100) : null;
+                  const profit = service.price - cost.material_cost;
+                  return (
+                    <div className="flex items-center justify-between px-5 py-3 rounded-2xl mb-4 text-[10px] font-black uppercase tracking-widest" style={{ backgroundColor: '#f0fdf4', color: '#16a34a' }}>
+                      <span className="flex items-center gap-1.5">
+                        <TrendingUp size={13} />
+                        Себест. {cost.material_cost.toFixed(2)} ₽
+                      </span>
+                      {margin !== null && (
+                        <span>
+                          Маржа {margin}% · +{profit.toFixed(0)} ₽
+                        </span>
+                      )}
+                    </div>
+                  );
+                })()}
 
                 <div className="flex gap-3">
                   <button
@@ -377,25 +418,59 @@ export default function AdminServices() {
               <div className="p-10 space-y-8">
                  <div className="space-y-4">
                     {serviceMaterials.length > 0 ? (
-                      serviceMaterials.map((sm) => (
-                        <div key={sm.id} className="flex items-center justify-between p-6 bg-zinc-50 rounded-2xl border border-zinc-100">
-                          <div className="flex items-center gap-4">
-                            <div className="w-10 h-10 rounded-xl bg-white border border-zinc-100 flex items-center justify-center">
-                              <Package size={18} style={{ color: '#D14D72' }} />
+                      <>
+                        {serviceMaterials.map((sm) => {
+                          const costLine = costs.get(modal?.service?.id ?? '')?.lines.find(l => l.material_id === sm.material_id);
+                          return (
+                            <div key={sm.id} className="flex items-center justify-between p-6 bg-zinc-50 rounded-2xl border border-zinc-100">
+                              <div className="flex items-center gap-4 flex-1 min-w-0">
+                                <div className="w-10 h-10 rounded-xl bg-white border border-zinc-100 flex items-center justify-center flex-shrink-0">
+                                  <Package size={18} style={{ color: '#D14D72' }} />
+                                </div>
+                                <div className="min-w-0">
+                                  <div className="text-sm font-black uppercase tracking-tight text-[#0A0A0A]">{sm.inventory_items.name}</div>
+                                  <div className="text-[10px] font-bold text-zinc-400">
+                                    Расход: {sm.amount} {sm.inventory_items.unit}
+                                    {costLine && costLine.avg_cost_per_unit > 0 && (
+                                      <span className="ml-2 text-zinc-300">· {costLine.avg_cost_per_unit.toFixed(2)} ₽/{sm.inventory_items.unit}</span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-4 flex-shrink-0">
+                                {costLine && costLine.subtotal > 0 && (
+                                  <span className="text-sm font-black text-zinc-500">{costLine.subtotal.toFixed(2)} ₽</span>
+                                )}
+                                <button onClick={() => handleRemoveMaterial(sm.id)} className="p-2 text-zinc-300 hover:text-red-500 transition-colors">
+                                  <Trash2 size={16} />
+                                </button>
+                              </div>
                             </div>
-                            <div>
-                              <div className="text-sm font-black uppercase tracking-tight text-[#0A0A0A]">{sm.inventory_items.name}</div>
-                              <div className="text-[10px] font-bold text-zinc-400">Расход: {sm.amount} {sm.inventory_items.unit}</div>
+                          );
+                        })}
+                        {/* Итого себестоимость */}
+                        {(() => {
+                          const cost = costs.get(modal?.service?.id ?? '');
+                          if (!cost || cost.material_cost === 0) return null;
+                          const svc = services.find(s => s.id === modal?.service?.id);
+                          const margin = svc && svc.price > 0 ? Math.round((1 - cost.material_cost / svc.price) * 100) : null;
+                          return (
+                            <div className="flex items-center justify-between px-6 py-4 rounded-2xl" style={{ backgroundColor: '#f0fdf4' }}>
+                              <span className="text-[10px] font-black uppercase tracking-widest" style={{ color: '#16a34a' }}>
+                                Себестоимость материалов
+                              </span>
+                              <div className="text-right">
+                                <span className="text-sm font-black" style={{ color: '#16a34a' }}>
+                                  {cost.material_cost.toFixed(2)} ₽
+                                </span>
+                                {margin !== null && (
+                                  <div className="text-[10px] font-bold text-zinc-400">маржа {margin}%</div>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                          <button 
-                            onClick={() => handleRemoveMaterial(sm.id)}
-                            className="p-2 text-zinc-300 hover:text-red-500 transition-colors"
-                          >
-                            <Trash2 size={16} />
-                          </button>
-                        </div>
-                      ))
+                          );
+                        })()}
+                      </>
                     ) : (
                       <div className="py-20 text-center border-2 border-dashed border-zinc-100 rounded-[2rem] text-zinc-300">
                          <Leaf size={32} className="mx-auto mb-4 opacity-20" />
