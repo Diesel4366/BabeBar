@@ -138,6 +138,20 @@ function BookingContent() {
     const toMins = (t: string) => { const [h, m] = t.split(':').map(Number); return h * 60 + m; };
     const newStart = toMins(time);
     const newEnd = newStart + totalDuration;
+
+    // Если выбран сегодняшний день — скрываем прошедшие слоты
+    if (selectedDate) {
+      const today = new Date();
+      const sel = selectedDate;
+      const isToday = sel.getFullYear() === today.getFullYear() &&
+        sel.getMonth() === today.getMonth() &&
+        sel.getDate() === today.getDate();
+      if (isToday) {
+        const nowMins = today.getHours() * 60 + today.getMinutes();
+        if (newStart <= nowMins) return false;
+      }
+    }
+
     return !occupiedIntervals.some(iv => newStart < toMins(iv.end) && newEnd > toMins(iv.start));
   };
 
