@@ -6,14 +6,16 @@ import { supabaseAdmin } from './supabase';
  */
 export async function getInventoryWarning(appointmentId: string): Promise<string> {
   try {
-    // 1. Получаем все материалы для этой записи
+    // 1. Получаем все материалы для этой записи через services
     const { data: materials, error } = await supabaseAdmin
       .from('appointment_services')
       .select(`
         service_id,
-        service_materials (
-          amount,
-          inventory_items (id, name, unit, actual_stock, reserved_stock, min_threshold)
+        services (
+          service_materials (
+            amount,
+            inventory_items (id, name, unit, actual_stock, reserved_stock, min_threshold)
+          )
         )
       `)
       .eq('appointment_id', appointmentId);
@@ -22,8 +24,9 @@ export async function getInventoryWarning(appointmentId: string): Promise<string
 
     const uniqueMats = new Map();
     materials.forEach((s: any) => {
-      if (s.service_materials) {
-        s.service_materials.forEach((sm: any) => {
+      const mats = s.services?.service_materials;
+      if (mats) {
+        mats.forEach((sm: any) => {
           const item = sm.inventory_items;
           if (item && !uniqueMats.has(item.id)) {
             uniqueMats.set(item.id, item);
