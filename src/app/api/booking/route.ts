@@ -121,38 +121,59 @@ export async function POST(req: Request) {
     const rawChatIds = process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '';
     const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
 
-    if (telegramToken && chatIds.length > 0) {
-      // Получаем данные профиля (включая username)
+    if (telegramToken) {
+      // Получаем данные профиля
       const { data: profileData } = await supabaseAdmin
         .from('profiles')
-        .select('telegram_username')
+        .select('telegram_username, telegram_chat_id, telegram_id')
         .eq('id', profileId)
         .single();
 
       const dateFormatted = new Date(formattedDate + 'T12:00:00').toLocaleDateString('ru-RU', {
         day: 'numeric', month: 'long', weekday: 'long',
       });
-      
-      let message = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}`;
-      
-      if (profileData?.telegram_username) {
-        message += `\n✈️ *Telegram:* @${profileData.telegram_username}`;
-      }
-      
-      message += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${services.map((s: Service) => s.name).join(', ')}\n💰 *Сумма:* ${totalPrice} ₽`;
-      
-      // Добавляем предупреждение по складу, если оно есть
-      if (inventoryWarning) {
-        message += inventoryWarning;
+
+      const serviceNames = services.map((s: Service) => s.name).join(', ');
+
+      // 4а. Уведомление администраторам
+      const rawChatIds = process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '';
+      const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
+
+      if (chatIds.length > 0) {
+        let adminMessage = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}`;
+        if (profileData?.telegram_username) {
+          adminMessage += `\n✈️ *Telegram:* @${profileData.telegram_username}`;
+        }
+        adminMessage += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${totalPrice} ₽`;
+        if (inventoryWarning) {
+          adminMessage += inventoryWarning;
+        }
+
+        await Promise.allSettled(chatIds.map(chatId =>
+          fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chat_id: chatId, text: adminMessage, parse_mode: 'Markdown' }),
+          })
+        ));
       }
 
-      await Promise.allSettled(chatIds.map(chatId =>
-        fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+      // 4б. Уведомление клиенту
+      const clientChatId = profileData?.telegram_chat_id || profileData?.telegram_id;
+      if (clientChatId) {
+        const studioAddress = process.env.STUDIO_ADDRESS ?? '';
+        let clientMessage = `✅ *Запись подтверждена!*\n\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${totalPrice} ₽`;
+        if (studioAddress) {
+          clientMessage += `\n\n📍 *Адрес:* ${studioAddress}`;
+        }
+        clientMessage += `\n\nБудем рады вас видеть! 🌸`;
+
+        await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
-        })
-      ));
+          body: JSON.stringify({ chat_id: clientChatId, text: clientMessage, parse_mode: 'Markdown' }),
+        });
+      }
     }
 
     return NextResponse.json({ success: true, appointmentId: appointment.id });
