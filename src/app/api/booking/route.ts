@@ -161,10 +161,11 @@ export async function POST(req: Request) {
       // 4б. Уведомление клиенту
       const clientChatId = profileData?.telegram_chat_id || profileData?.telegram_id;
       if (clientChatId) {
-        const studioAddress = process.env.STUDIO_ADDRESS ?? '';
+        const { getSettings } = await import('@/lib/settings');
+        const siteSettings = await getSettings();
         let clientMessage = `✅ *Запись подтверждена!*\n\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${totalPrice} ₽`;
-        if (studioAddress) {
-          clientMessage += `\n\n📍 *Адрес:* ${studioAddress}`;
+        if (siteSettings.address) {
+          clientMessage += `\n\n📍 *Адрес:* ${siteSettings.address}`;
         }
         clientMessage += `\n\nБудем рады вас видеть! 🌸`;
 

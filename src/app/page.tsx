@@ -7,6 +7,7 @@ import { Header } from '@/components/shared/Header';
 import { BookingCTA } from '@/components/client/BookingCTA';
 import { Advantages } from '@/components/client/Advantages';
 import { SITE_CONFIG } from '@/lib/config';
+import { getSettings } from '@/lib/settings';
 import { MapPin, Phone, Camera } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,11 +20,10 @@ const galleryImages = [
 ];
 
 export default async function Home() {
-  const { data: services } = await supabaseAdmin
-    .from('services')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: true });
+  const [{ data: services }, settings] = await Promise.all([
+    supabaseAdmin.from('services').select('*').eq('is_active', true).order('created_at', { ascending: true }),
+    getSettings(),
+  ]);
 
   return (
     <main className="min-h-screen bg-[#FAFAFA] page-transition">
@@ -47,7 +47,7 @@ export default async function Home() {
             {galleryImages.map((item, i) => (
               <Link
                 key={i}
-                href={SITE_CONFIG.instagramUrl}
+                href={settings.instagram_url}
                 target="_blank"
                 aria-label={item.alt}
                 className="aspect-[3/4] rounded-[2rem] overflow-hidden relative group"
@@ -71,7 +71,7 @@ export default async function Home() {
 
           <div className="mt-16 text-center">
             <Link
-              href={SITE_CONFIG.instagramUrl}
+              href={settings.instagram_url}
               target="_blank"
               className="inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.3em] text-zinc-400 hover:text-primary transition-colors"
             >
@@ -100,7 +100,7 @@ export default async function Home() {
                     <MapPin size={20} />
                   </div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-300">Адрес студии</h4>
-                  <p className="font-bold text-lg text-[#0A0A0A]">{SITE_CONFIG.address}</p>
+                  <p className="font-bold text-lg text-[#0A0A0A]">{settings.address}</p>
                 </div>
 
                 <div className="space-y-2 group">
@@ -108,7 +108,7 @@ export default async function Home() {
                     <Phone size={20} />
                   </div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-300">Телефон</h4>
-                  <p className="font-bold text-lg text-[#0A0A0A]">{SITE_CONFIG.phone}</p>
+                  <p className="font-bold text-lg text-[#0A0A0A]">{settings.phone}</p>
                 </div>
 
                 <div className="space-y-2 group">
@@ -116,7 +116,7 @@ export default async function Home() {
                     <Camera size={20} />
                   </div>
                   <h4 className="text-[10px] font-black uppercase tracking-widest text-zinc-300">Instagram</h4>
-                  <p className="font-bold text-lg text-[#0A0A0A]">{SITE_CONFIG.instagram}</p>
+                  <p className="font-bold text-lg text-[#0A0A0A]">{settings.instagram}</p>
                 </div>
               </div>
             </div>
@@ -132,14 +132,14 @@ export default async function Home() {
             BABE<span className="text-primary italic">BAR</span>
           </div>
           <div className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.3em]">
-            &copy; {new Date().getFullYear()} {SITE_CONFIG.masterName}
+            &copy; {new Date().getFullYear()} {settings.master_name}
           </div>
           <Link
-            href={SITE_CONFIG.instagramUrl}
+            href={settings.instagram_url}
             target="_blank"
             className="text-[10px] font-black uppercase tracking-widest text-zinc-400 hover:text-primary transition-colors"
           >
-            {SITE_CONFIG.instagram}
+            {settings.instagram}
           </Link>
         </div>
       </footer>
