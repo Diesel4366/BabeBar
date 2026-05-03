@@ -178,6 +178,15 @@ export async function DELETE(req: Request) {
 
   const { error } = await supabaseAdmin.from('inventory_receipts').delete().eq('id', id);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  // Пересчитываем avg_cost_per_unit из оставшихся поступлений
+  if (items) {
+    const affectedItemIds = [...new Set(items.map(i => i.item_id))];
+    for (const itemId of affectedItemIds) {
+      await recalcAvgCost(itemId);
+    }
+  }
+
   return NextResponse.json({ success: true });
 }
 
@@ -210,5 +219,30 @@ async function addStock(itemId: string, delta: number) {
   await supabaseAdmin
     .from('inventory_items')
     .update({ actual_stock: (data.actual_stock ?? 0) + delta })
+    .eq('id', itemId);
+}
+
+// Пересчёт средневзвешенной из всех оставшихся поступлений
+async function recalcAvgCost(itemId: string) {
+  const { data } = await supabaseAdmin
+    .from('inventory_receipt_items')
+    .select('quantity, cost_per_unit')
+    .eq('item_id', itemId);
+
+  if (!data || data.length === 0) {
+    await supabaseAdmin
+      .from('inventory_items')
+      .update({ avg_cost_per_unit: 0 })
+      .eq('id', itemId);
+    return;
+  }
+
+  const totalQty = data.reduce((s, r) => s + Number(r.quantity), 0);
+  const weightedSum = data.reduce((s, r) => s + Number(r.quantity) * Number(r.cost_per_unit), 0);
+  const newAvg = totalQty > 0 ? weightedSum / totalQty : 0;
+
+  await supabaseAdmin
+    .from('inventory_items')
+    .update({ avg_cost_per_unit: Math.round(newAvg * 10000) / 10000 })
     .eq('id', itemId);
 }

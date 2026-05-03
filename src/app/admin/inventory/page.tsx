@@ -460,6 +460,8 @@ export default function InventoryPage() {
                       <option value="шт">шт</option>
                       <option value="упак">упак</option>
                       <option value="пар">пар</option>
+                      <option value="м">м</option>
+                      <option value="см">см</option>
                     </select>
                   </div>
                   <div>
