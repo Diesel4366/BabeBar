@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { cookies } from 'next/headers';
 import { verifyUserToken } from '@/lib/userAuth';
+import { supabaseAdmin } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
@@ -8,7 +9,10 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
   const token = store.get('user_session')?.value;
   if (token) {
     const id = await verifyUserToken(token, process.env.ADMIN_SECRET!);
-    if (id) redirect('/profile');
+    if (id) {
+      const { data } = await supabaseAdmin.from('profiles').select('id').eq('id', id).maybeSingle();
+      if (data) redirect('/profile');
+    }
   }
 
   const sp = await props.searchParams;
