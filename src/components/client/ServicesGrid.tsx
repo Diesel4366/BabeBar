@@ -6,6 +6,7 @@ import { Service } from '@/types';
 import { CATEGORY_ORDER } from '@/lib/config';
 import { Clock, Star, ArrowUpRight, ChevronDown, ChevronUp } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 const INITIAL_SHOW = 6;
 
@@ -96,6 +97,12 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ services }) => {
                 onClick={() => router.push(`/booking?serviceId=${service.id}`)}
                 className="card-modern group cursor-pointer p-8 flex flex-col h-full hover:border-primary/20 transition-all duration-500"
               >
+                {service.image_url && (
+                  <div className="relative w-full h-44 -mx-8 -mt-8 mb-8 rounded-t-[1.75rem] overflow-hidden">
+                    <Image src={service.image_url} alt={service.name} fill className="object-cover group-hover:scale-105 transition-transform duration-700" />
+                  </div>
+                )}
+
                 <div className="flex justify-between items-start mb-12">
                   <div className="w-12 h-12 bg-zinc-50 rounded-2xl flex items-center justify-center text-zinc-400 group-hover:bg-primary group-hover:text-white transition-all duration-500">
                     <Star size={20} fill="currentColor" />
