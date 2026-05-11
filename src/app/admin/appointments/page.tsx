@@ -17,6 +17,7 @@ interface AppointmentItem {
   endTime: string;
   status: AppointmentStatus;
   totalPrice: number;
+  prepaidAmount: number;
   source: string | null;
   client: { name: string; phone: string; telegram_username?: string | null };
   services: { name: string }[];
@@ -292,9 +293,19 @@ export default function AdminAppointments() {
                         {app.services?.map(s => s.name).join(', ')}
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 text-right">
                       <div className="text-[8px] font-black uppercase tracking-[0.2em] text-zinc-300 mb-2">Сумма</div>
                       <div className="text-2xl md:text-3xl font-black text-primary leading-none">{app.totalPrice} ₽</div>
+                      {app.prepaidAmount > 0 && (
+                        <div className="text-[9px] font-black uppercase tracking-widest text-green-500 mt-1">
+                          ✓ {app.prepaidAmount} ₽ оплачено онлайн
+                        </div>
+                      )}
+                      {app.prepaidAmount > 0 && app.prepaidAmount < app.totalPrice && (
+                        <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400">
+                          {app.totalPrice - app.prepaidAmount} ₽ при визите
+                        </div>
+                      )}
                     </div>
                   </div>
 

@@ -8,10 +8,12 @@ import { Service } from '@/types';
 
 export async function POST(req: Request) {
   try {
-    const { name, phone: rawPhone, date, time, services, totalPrice, promoCodeId, discountAmount = 0 }: {
+    const { name, phone: rawPhone, date, time, services, totalPrice, promoCodeId, discountAmount = 0, paymentMethod = 'cash', paymentAmount = 0 }: {
       name: string; phone: string; date: string; time: string;
       services: Service[]; totalPrice: number;
       promoCodeId?: string; discountAmount?: number;
+      paymentMethod?: 'cash' | 'online_50' | 'online_100';
+      paymentAmount?: number;
     } = await req.json();
 
     const phone = rawPhone ? normalizePhone(rawPhone) : rawPhone;
@@ -106,7 +108,7 @@ export async function POST(req: Request) {
     }
 
     const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://babebar.ru';
-    const usesPayment = process.env.TINKOFF_TERMINAL_KEY && totalPrice > 0;
+    const usesPayment = paymentMethod !== 'cash' && !!process.env.TINKOFF_TERMINAL_KEY && paymentAmount > 0;
 
     const { data: appointment, error: appError } = await supabaseAdmin
       .from('appointments')
@@ -118,6 +120,7 @@ export async function POST(req: Request) {
         total_price: totalPrice,
         discount_amount: validatedPromoId ? discountAmount : 0,
         promo_code_id: validatedPromoId,
+        prepaid_amount: usesPayment ? paymentAmount : 0,
         status: usesPayment ? 'pending_payment' : 'active',
         payment_status: usesPayment ? 'pending' : 'not_required',
       }])
@@ -155,7 +158,7 @@ export async function POST(req: Request) {
       const serviceNames = services.map((s: Service) => s.name).join(', ');
       const payment = await initPayment({
         orderId: appointment.id,
-        amount: totalPrice,
+        amount: paymentAmount,
         description: `BABEBAR: ${serviceNames}`,
         successUrl: `${siteOrigin}/booking/success?id=${appointment.id}`,
         failUrl: `${siteOrigin}/booking/fail?id=${appointment.id}`,

@@ -22,7 +22,7 @@ export async function POST(req: Request) {
         .eq('id', appointmentId)
         .eq('status', 'pending_payment')
         .select(`
-          date, start_time, end_time, total_price,
+          date, start_time, end_time, total_price, prepaid_amount,
           client:profiles(name, phone, telegram_username, telegram_chat_id, telegram_id),
           services:appointment_services(service:services(name))
         `)
@@ -63,7 +63,13 @@ async function sendNotifications(appointment: any) {
   if (chatIds.length) {
     let msg = `🌟 *Новая запись!* _(оплата подтверждена)_\n\n👤 *Клиент:* ${profile?.name}\n📞 *Телефон:* ${profile?.phone}`;
     if (profile?.telegram_username) msg += `\n✈️ *Telegram:* @${profile.telegram_username}`;
-    msg += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${appointment.total_price} ₽`;
+    const prepaid = appointment.prepaid_amount ?? 0;
+  const remaining = (appointment.total_price ?? 0) - prepaid;
+  msg += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${appointment.total_price} ₽`;
+  if (prepaid > 0) {
+    msg += `\n✅ *Оплачено онлайн:* ${prepaid} ₽`;
+    if (remaining > 0) msg += `\n🏠 *При визите:* ${remaining} ₽`;
+  }
     await Promise.allSettled(chatIds.map(chatId =>
       fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
         method: 'POST',

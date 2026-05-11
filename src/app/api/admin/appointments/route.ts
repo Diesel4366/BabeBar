@@ -45,6 +45,7 @@ export async function GET(req: Request) {
       endTime: app.end_time,
       status: app.status,
       totalPrice: app.total_price,
+      prepaidAmount: app.prepaid_amount ?? 0,
       source: app.source ?? null,
       client: app.client,
       services: app.services.map((s: any) => s.service),
