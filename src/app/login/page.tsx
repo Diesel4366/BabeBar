@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { verifyUserToken } from '@/lib/userAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
@@ -19,10 +19,12 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
   const errorMsg = sp.error;
   const hasError = !!errorMsg;
 
-  // Используем Client ID из вашего скриншота
+  const headersList = await headers();
+  const host = headersList.get('host') ?? 'babebar.ru';
+  const proto = host.includes('localhost') ? 'http' : 'https';
   const clientId = '8752821995';
-  const redirectUri = 'https://babebar.ru/api/auth/telegram/callback';
-  
+  const redirectUri = `${proto}://${host}/api/auth/telegram/callback`;
+
   const telegramAuthUrl = `https://oauth.telegram.org/auth?client_id=${clientId}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code&scope=openid+profile`;
 
   return (
