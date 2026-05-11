@@ -44,6 +44,8 @@ export default function AdminAppointments() {
   const [showFilters, setShowFilters] = useState(false);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 20;
 
   const fetchAppointments = useCallback(async () => {
     setIsLoading(true);
@@ -88,6 +90,10 @@ export default function AdminAppointments() {
   });
 
   const activeFiltersCount = (statusFilter !== 'all' ? 1 : 0) + (dateFilter !== 'all' ? 1 : 0);
+  const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
+  const paginated = filtered.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+
+  const resetPage = () => setPage(1);
 
   return (
     <div className="space-y-8 lg:space-y-12 max-w-full overflow-x-hidden">
@@ -111,7 +117,7 @@ export default function AdminAppointments() {
               type="text"
               placeholder="Поиск..."
               value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
+              onChange={e => { setSearchTerm(e.target.value); resetPage(); }}
               className="w-full bg-white pl-14 pr-6 py-4 rounded-2xl border border-zinc-100 focus:border-primary focus:ring-4 focus:ring-primary/5 font-bold text-sm outline-none transition-all shadow-sm"
             />
           </div>
@@ -146,7 +152,7 @@ export default function AdminAppointments() {
                     {(['all', 'active', 'completed', 'cancelled_by_admin', 'cancelled_by_client'] as const).map(s => (
                       <button
                         key={s}
-                        onClick={() => setStatusFilter(s)}
+                        onClick={() => { setStatusFilter(s); resetPage(); }}
                         className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
                           statusFilter === s ? 'bg-[#0A0A0A] text-white shadow-lg shadow-black/10' : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
                         }`}
@@ -163,7 +169,7 @@ export default function AdminAppointments() {
                     {([['all', 'За всё время'], ['today', 'Сегодня'], ['week', 'Неделя']] as const).map(([val, label]) => (
                       <button
                         key={val}
-                        onClick={() => setDateFilter(val)}
+                        onClick={() => { setDateFilter(val); resetPage(); }}
                         className={`px-4 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all ${
                           dateFilter === val ? 'bg-[#0A0A0A] text-white shadow-lg shadow-black/10' : 'bg-zinc-50 text-zinc-400 hover:bg-zinc-100'
                         }`}
@@ -176,7 +182,7 @@ export default function AdminAppointments() {
 
                 {activeFiltersCount > 0 && (
                   <button
-                    onClick={() => { setStatusFilter('all'); setDateFilter('all'); }}
+                    onClick={() => { setStatusFilter('all'); setDateFilter('all'); resetPage(); }}
                     className="flex items-center gap-2 text-[9px] font-black uppercase tracking-widest text-zinc-400 hover:text-red-500 transition-colors pt-1"
                   >
                     <X size={12} />
@@ -194,9 +200,10 @@ export default function AdminAppointments() {
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-primary" />
         </div>
       ) : (
+        <>
         <div className="grid grid-cols-1 gap-4 md:gap-6">
           {filtered.length > 0 ? (
-            filtered.map((app, i) => (
+            paginated.map((app, i) => (
               <motion.div
                 key={app.id}
                 initial={{ opacity: 0, y: 10 }}
@@ -294,6 +301,41 @@ export default function AdminAppointments() {
             </div>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-center gap-3 pt-4">
+            <button
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-6 py-3 rounded-2xl border border-zinc-100 bg-white text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:border-primary transition-all"
+            >
+              ← Назад
+            </button>
+            <div className="flex items-center gap-2">
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                <button
+                  key={p}
+                  onClick={() => setPage(p)}
+                  className={`w-10 h-10 rounded-xl text-[10px] font-black transition-all ${
+                    p === page
+                      ? 'bg-[#0A0A0A] text-white shadow-lg'
+                      : 'bg-white border border-zinc-100 text-zinc-400 hover:border-primary'
+                  }`}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="px-6 py-3 rounded-2xl border border-zinc-100 bg-white text-[10px] font-black uppercase tracking-widest disabled:opacity-30 hover:border-primary transition-all"
+            >
+              Вперёд →
+            </button>
+          </div>
+        )}
+        </>
       )}
     </div>
   );
