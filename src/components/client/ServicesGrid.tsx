@@ -98,7 +98,7 @@ export const ServicesGrid: React.FC<ServicesGridProps> = ({ services }) => {
                 className="card-modern group cursor-pointer p-8 flex flex-col h-full hover:border-primary/20 transition-all duration-500"
               >
                 {service.image_url && (
-                  <div className="relative w-full aspect-[4/3] -mx-8 -mt-8 mb-8 rounded-t-[1.75rem] overflow-hidden">
+                  <div className="relative w-[calc(100%+4rem)] aspect-[4/3] -mx-8 -mt-8 mb-8 rounded-t-[1.75rem] overflow-hidden">
                     <Image src={service.image_url} alt={service.name} fill className="object-cover object-top group-hover:scale-105 transition-transform duration-700" />
                   </div>
                 )}
