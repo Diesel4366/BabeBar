@@ -38,7 +38,8 @@ export async function GET(req: Request) {
   // 1. ПРОВЕРЯЕМ НОВЫЙ МЕТОД (OIDC)
   const code = url.searchParams.get('code');
   if (code) {
-    const userData = await exchangeTelegramCode(code);
+    const redirectUri = `${origin}/api/auth/telegram/callback`;
+    const userData = await exchangeTelegramCode(code, redirectUri);
     if (!userData) return fail('Code exchange failed');
     const photoUrl = userData.photo_url || '';
     tgData = {

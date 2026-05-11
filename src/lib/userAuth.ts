@@ -62,10 +62,10 @@ export async function verifyTelegramAuth(data: Record<string, string>): Promise<
   return computed === hash;
 }
 
-export async function exchangeTelegramCode(code: string) {
+export async function exchangeTelegramCode(code: string, redirectUri: string) {
   const clientId = '8752821995';
   const clientSecret = process.env.TELEGRAM_CLIENT_SECRET;
-  
+
   if (!clientSecret) {
     console.error('CRITICAL: TELEGRAM_CLIENT_SECRET not found in environment');
     return null;
@@ -80,7 +80,7 @@ export async function exchangeTelegramCode(code: string) {
         code,
         client_id: clientId,
         client_secret: clientSecret,
-        redirect_uri: 'https://babebar.ru/api/auth/telegram/callback'
+        redirect_uri: redirectUri,
       })
     });
 
