@@ -3,6 +3,8 @@ import { cookies, headers } from 'next/headers';
 import { verifyUserToken } from '@/lib/userAuth';
 import { supabaseAdmin } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
+import { Suspense } from 'react';
+import MiniAppAutoAuth from '@/components/MiniAppAutoAuth';
 
 export default async function LoginPage(props: { searchParams: Promise<{ error?: string }> }) {
   const store = await cookies();
@@ -46,6 +48,9 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
         )}
 
         <div className="bg-white rounded-[2rem] border border-zinc-100 shadow-sm p-8 space-y-6">
+          <Suspense>
+            <MiniAppAutoAuth />
+          </Suspense>
           <a
             href={telegramAuthUrl}
             className="w-full flex items-center justify-center gap-3 py-5 rounded-2xl font-black text-sm uppercase tracking-widest text-white transition-all hover:opacity-90 active:scale-95 shadow-lg shadow-blue-500/20"
