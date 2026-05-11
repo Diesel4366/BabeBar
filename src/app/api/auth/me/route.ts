@@ -13,12 +13,11 @@ export async function GET() {
 
   const { data } = await supabaseAdmin
     .from('profiles')
-    .select('id, name, phone, telegram_id, oidc_id, telegram_username, telegram_photo, created_at, birthday')
+    .select('id, name, phone, telegram_id, oidc_id, telegram_username, telegram_photo, created_at, birthday, is_admin')
     .eq('id', profileId)
     .single();
 
   if (!data) return NextResponse.json(null);
 
-  const isAdmin = data.telegram_id?.toString() === process.env.ADMIN_TELEGRAM_ID;
-  return NextResponse.json({ ...data, isAdmin });
+  return NextResponse.json({ ...data, isAdmin: data.is_admin });
 }

@@ -204,10 +204,11 @@ export default function ProfilePage() {
             {user?.isAdmin && (
               <Link
                 href="/admin"
-                className="flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-zinc-100 hover:border-zinc-200 text-zinc-500 hover:text-zinc-700 transition-all"
+                className="flex items-center gap-2 px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-md"
+                style={{ backgroundColor: '#D14D72' }}
               >
                 <Settings size={14} />
-                Админ
+                Админ панель
               </Link>
             )}
           </div>
