@@ -3,9 +3,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Clock, User, Phone,
-  CheckCircle2, XCircle, Search, Filter, X, Send,
+  CheckCircle2, XCircle, Search, Filter, X, Send, Plus,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import AdminNewAppointmentModal from '@/components/admin/AdminNewAppointmentModal';
 
 type AppointmentStatus = 'active' | 'cancelled_by_client' | 'cancelled_by_admin' | 'completed';
 
@@ -16,6 +17,7 @@ interface AppointmentItem {
   endTime: string;
   status: AppointmentStatus;
   totalPrice: number;
+  source: string | null;
   client: { name: string; phone: string; telegram_username?: string | null };
   services: { name: string }[];
 }
@@ -37,6 +39,15 @@ const STATUS_COLORS: Record<AppointmentStatus, string> = {
 type DateFilter = 'all' | 'today' | 'week';
 type StatusFilter = 'all' | AppointmentStatus;
 
+const SOURCE_LABELS: Record<string, string> = {
+  word_of_mouth: 'Сарафан',
+  telegram: 'Telegram',
+  vk: 'ВКонтакте',
+  phone_call: 'Звонок',
+  avito: 'Авито',
+  other: 'Другое',
+};
+
 const PAGE_SIZE = 20;
 
 export default function AdminAppointments() {
@@ -49,6 +60,7 @@ export default function AdminAppointments() {
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [dateFilter, setDateFilter] = useState<DateFilter>('all');
   const [page, setPage] = useState(1);
+  const [showNewModal, setShowNewModal] = useState(false);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
@@ -111,6 +123,14 @@ export default function AdminAppointments() {
             {total} записей в базе
           </p>
         </div>
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="flex items-center gap-3 px-6 py-4 rounded-2xl font-black uppercase tracking-widest text-[10px] transition-all shadow-lg shadow-primary/20 text-white"
+          style={{ backgroundColor: '#D14D72' }}
+        >
+          <Plus size={16} />
+          Новая запись
+        </button>
       </div>
 
       {/* Search & Filters */}
@@ -229,6 +249,11 @@ export default function AdminAppointments() {
                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border shadow-sm ${STATUS_COLORS[app.status]}`}>
                           {STATUS_LABELS[app.status]}
                         </span>
+                        {app.source && SOURCE_LABELS[app.source] && (
+                          <span className="px-3 py-1 rounded-full text-[8px] font-black uppercase border bg-zinc-50 text-zinc-400 border-zinc-100">
+                            {SOURCE_LABELS[app.source]}
+                          </span>
+                        )}
                       </div>
                       <div className="flex flex-wrap gap-x-4 gap-y-2 text-[10px] md:text-xs font-bold text-zinc-400">
                         <div className="flex items-center gap-1.5">
@@ -342,6 +367,18 @@ export default function AdminAppointments() {
         )}
         </>
       )}
+
+      <AnimatePresence>
+        {showNewModal && (
+          <AdminNewAppointmentModal
+            onClose={() => setShowNewModal(false)}
+            onCreated={() => {
+              setShowNewModal(false);
+              fetchAppointments(page, statusFilter, dateFilter, debouncedSearch);
+            }}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }
