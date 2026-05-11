@@ -2,6 +2,23 @@ import crypto from 'crypto';
 
 const BASE_URL = 'https://securepay.tinkoff.ru/v2';
 
+export interface TinkoffReceiptItem {
+  Name: string;
+  Price: number;
+  Quantity: number;
+  Amount: number;
+  PaymentMethod: 'full_payment' | 'advance';
+  PaymentObject: 'service';
+  Tax: 'none' | 'vat0' | 'vat10' | 'vat20';
+}
+
+export interface TinkoffReceipt {
+  Phone?: string;
+  Email?: string;
+  Taxation: string;
+  Items: TinkoffReceiptItem[];
+}
+
 function generateToken(params: Record<string, unknown>): string {
   const tokenParams: Record<string, unknown> = { ...params, Password: process.env.TINKOFF_PASSWORD };
   delete tokenParams['Token'];
@@ -26,6 +43,7 @@ export async function initPayment(opts: {
   successUrl: string;
   failUrl: string;
   notificationUrl: string;
+  receipt?: TinkoffReceipt;
 }): Promise<{ paymentId: string; paymentUrl: string } | null> {
   const body: Record<string, unknown> = {
     TerminalKey: process.env.TINKOFF_TERMINAL_KEY,
@@ -36,6 +54,7 @@ export async function initPayment(opts: {
     FailURL: opts.failUrl,
     NotificationURL: opts.notificationUrl,
   };
+  if (opts.receipt) body['Receipt'] = opts.receipt;
   body['Token'] = generateToken(body);
 
   const res = await fetch(`${BASE_URL}/Init`, {
@@ -53,12 +72,13 @@ export async function initPayment(opts: {
   return { paymentId: String(data.PaymentId), paymentUrl: data.PaymentURL };
 }
 
-export async function cancelPayment(paymentId: string, amount: number): Promise<boolean> {
+export async function cancelPayment(paymentId: string, amount: number, receipt?: TinkoffReceipt): Promise<boolean> {
   const body: Record<string, unknown> = {
     TerminalKey: process.env.TINKOFF_TERMINAL_KEY,
     PaymentId: paymentId,
     Amount: Math.round(amount * 100),
   };
+  if (receipt) body['Receipt'] = receipt;
   body['Token'] = generateToken(body);
 
   const res = await fetch(`${BASE_URL}/Cancel`, {

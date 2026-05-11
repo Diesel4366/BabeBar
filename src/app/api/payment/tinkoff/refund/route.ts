@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
-import { cancelPayment } from '@/lib/tinkoff';
+import { cancelPayment, TinkoffReceipt } from '@/lib/tinkoff';
 
 export async function POST(req: Request) {
   try {
@@ -9,7 +9,11 @@ export async function POST(req: Request) {
 
     const { data: appointment } = await supabaseAdmin
       .from('appointments')
-      .select('payment_id, prepaid_amount, payment_status')
+      .select(`
+        payment_id, prepaid_amount, payment_status,
+        client:profiles(phone),
+        services:appointment_services(service:services(name, price))
+      `)
       .eq('id', appointmentId)
       .single();
 
@@ -18,7 +22,27 @@ export async function POST(req: Request) {
     if (!appointment.payment_id) return NextResponse.json({ error: 'Нет данных об оплате' }, { status: 400 });
     if (!appointment.prepaid_amount) return NextResponse.json({ error: 'Нечего возвращать' }, { status: 400 });
 
-    const ok = await cancelPayment(appointment.payment_id, appointment.prepaid_amount);
+    const taxation = process.env.TINKOFF_TAXATION ?? 'usn_income';
+    const refundAmount = appointment.prepaid_amount;
+    const services = (appointment.services as any[]).map(s => s.service).filter(Boolean);
+
+    const receipt: TinkoffReceipt = {
+      Phone: (appointment.client as any)?.phone,
+      Taxation: taxation,
+      Items: [{
+        Name: services.length > 0
+          ? `Возврат: ${services.map((s: any) => s.name).join(', ')}`.slice(0, 128)
+          : 'Возврат оплаты',
+        Price: Math.round(refundAmount * 100),
+        Quantity: 1,
+        Amount: Math.round(refundAmount * 100),
+        PaymentMethod: 'full_payment',
+        PaymentObject: 'service',
+        Tax: 'none',
+      }],
+    };
+
+    const ok = await cancelPayment(appointment.payment_id, refundAmount, receipt);
     if (!ok) return NextResponse.json({ error: 'Tinkoff не подтвердил возврат' }, { status: 502 });
 
     await supabaseAdmin

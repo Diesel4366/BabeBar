@@ -3,7 +3,7 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyUserToken } from '@/lib/userAuth';
 import { normalizePhone } from '@/lib/phone';
-import { initPayment } from '@/lib/tinkoff';
+import { initPayment, TinkoffReceipt } from '@/lib/tinkoff';
 import { Service } from '@/types';
 
 export async function POST(req: Request) {
@@ -156,6 +156,39 @@ export async function POST(req: Request) {
     // Если есть эквайринг — инициируем оплату и возвращаем URL
     if (usesPayment) {
       const serviceNames = services.map((s: Service) => s.name).join(', ');
+      const taxation = process.env.TINKOFF_TAXATION ?? 'usn_income';
+      const isAdvance = paymentMethod === 'online_50';
+
+      // Чек для онлайн-кассы (54-ФЗ)
+      const receiptItems = isAdvance
+        ? [{
+            Name: `Предоплата: ${serviceNames}`.slice(0, 128),
+            Price: Math.round(paymentAmount * 100),
+            Quantity: 1,
+            Amount: Math.round(paymentAmount * 100),
+            PaymentMethod: 'advance' as const,
+            PaymentObject: 'service' as const,
+            Tax: 'none' as const,
+          }]
+        : services.map((s: Service) => {
+            const itemPrice = Math.round(s.price * 100);
+            return {
+              Name: s.name.slice(0, 128),
+              Price: itemPrice,
+              Quantity: 1,
+              Amount: itemPrice,
+              PaymentMethod: 'full_payment' as const,
+              PaymentObject: 'service' as const,
+              Tax: 'none' as const,
+            };
+          });
+
+      const receipt: TinkoffReceipt = {
+        Phone: phone,
+        Taxation: taxation,
+        Items: receiptItems,
+      };
+
       const payment = await initPayment({
         orderId: appointment.id,
         amount: paymentAmount,
@@ -163,6 +196,7 @@ export async function POST(req: Request) {
         successUrl: `${siteOrigin}/booking/success?id=${appointment.id}`,
         failUrl: `${siteOrigin}/booking/fail?id=${appointment.id}`,
         notificationUrl: `${siteOrigin}/api/payment/tinkoff/webhook`,
+        receipt,
       });
 
       if (!payment) {
