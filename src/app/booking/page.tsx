@@ -640,7 +640,42 @@ function BookingContent() {
                   {promoError && <p className="text-red-500 text-xs font-bold px-1">{promoError}</p>}
                 </div>
 
-                {/* Способ оплаты — временно скрыто */}
+                {/* Способ оплаты */}
+                <div className="space-y-3">
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-zinc-400 block">Способ оплаты</span>
+                  <div className="grid grid-cols-1 gap-2">
+                    {([
+                      { id: 'cash', label: 'Наличными при визите', sub: 'Оплата на месте' },
+                      { id: 'online_50', label: 'Предоплата 50%', sub: `${Math.ceil(finalPrice / 2)} ₽ сейчас + ${finalPrice - Math.ceil(finalPrice / 2)} ₽ при визите` },
+                      { id: 'online_100', label: 'Полная оплата онлайн', sub: `${finalPrice} ₽ сейчас` },
+                    ] as const).map(opt => (
+                      <button
+                        key={opt.id}
+                        type="button"
+                        onClick={() => setPaymentMethod(opt.id)}
+                        className="flex items-center gap-4 px-5 py-4 rounded-2xl border text-left transition-all"
+                        style={{
+                          borderColor: paymentMethod === opt.id ? '#D14D72' : '#E4E4E7',
+                          backgroundColor: paymentMethod === opt.id ? 'rgba(209,77,114,0.04)' : 'white',
+                        }}
+                      >
+                        <div
+                          className="w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 transition-all"
+                          style={{
+                            borderColor: paymentMethod === opt.id ? '#D14D72' : '#D4D4D8',
+                            backgroundColor: paymentMethod === opt.id ? '#D14D72' : 'transparent',
+                          }}
+                        >
+                          {paymentMethod === opt.id && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <div className="font-black text-sm uppercase tracking-tight text-[#0A0A0A]">{opt.label}</div>
+                          <div className="text-[10px] font-bold text-zinc-400 mt-0.5">{opt.sub}</div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
 
                 <div className="bg-[#0A0A0A] text-white p-10 rounded-[3rem] shadow-2xl space-y-10">
                   <div className="flex justify-between items-end border-b border-white/10 pb-8">
