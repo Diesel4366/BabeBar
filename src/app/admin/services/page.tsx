@@ -261,9 +261,9 @@ export default function AdminServices() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {services.map(service => (
             <div key={service.id} className={`bg-white rounded-[2.5rem] border border-zinc-100 overflow-hidden flex flex-col hover:shadow-xl transition-all duration-500 group ${!service.is_active ? 'opacity-50' : ''}`}>
-              <div className="relative h-56 bg-zinc-100 flex items-center justify-center overflow-hidden">
+              <div className="relative w-full aspect-[4/3] bg-zinc-100 flex items-center justify-center overflow-hidden">
                 {service.image_url ? (
-                  <Image src={service.image_url} alt={service.name} fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                  <Image src={service.image_url} alt={service.name} fill className="object-cover object-top group-hover:scale-110 transition-transform duration-700" />
                 ) : (
                   <span className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.2em]">Нет фото</span>
                 )}
