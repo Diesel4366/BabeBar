@@ -107,7 +107,7 @@ export async function POST(req: Request) {
       if (isValid) validatedPromoId = promo.id;
     }
 
-    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://babebar.ru';
+    const siteOrigin = (process.env.NEXT_PUBLIC_SITE_URL ?? 'https://babebar.ru').replace(/\/$/, '');
     const usesPayment = paymentMethod !== 'cash' && !!process.env.TINKOFF_TERMINAL_KEY && paymentAmount > 0;
 
     const { data: appointment, error: appError } = await supabaseAdmin
