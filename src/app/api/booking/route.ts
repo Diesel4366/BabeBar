@@ -2,14 +2,17 @@ import { NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyUserToken } from '@/lib/userAuth';
+import { normalizePhone } from '@/lib/phone';
 import { Service } from '@/types';
 
 export async function POST(req: Request) {
   try {
-    const { name, phone, date, time, services, totalPrice }: {
+    const { name, phone: rawPhone, date, time, services, totalPrice }: {
       name: string; phone: string; date: string; time: string;
       services: Service[]; totalPrice: number;
     } = await req.json();
+
+    const phone = rawPhone ? normalizePhone(rawPhone) : rawPhone;
 
     if (!name || !phone || !date || !time || !services || services.length === 0) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });

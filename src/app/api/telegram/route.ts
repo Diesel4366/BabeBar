@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase';
 import { format, startOfToday, addDays } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { getInventoryWarning } from '@/lib/inventory-alerts';
+import { normalizePhone } from '@/lib/phone';
 
 const TOKEN = process.env.TELEGRAM_TOKEN;
 
@@ -30,14 +31,6 @@ const MAIN_MENU = {
     [{ text: '📅 Мои записи', callback_data: 'my_appointments' }],
   ],
 };
-
-function normalizePhone(raw: string): string {
-  const digits = raw.replace(/\D/g, '');
-  if (digits.length === 11 && digits.startsWith('8')) return `+7${digits.slice(1)}`;
-  if (digits.length >= 11 && digits.startsWith('7')) return `+${digits}`;
-  if (digits.length === 10) return `+7${digits}`;
-  return `+${digits}`;
-}
 
 // Найти профиль по telegram_id. Если не нашли — попробовать найти по нормализованному телефону
 // и прилинковать telegram_id к нему (merge split profiles).
