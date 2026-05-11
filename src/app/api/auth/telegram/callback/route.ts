@@ -45,7 +45,7 @@ export async function GET(req: Request) {
     tgData = {
       id: userData.id,
       first_name: userData.first_name,
-      username: userData.username || '',
+      username: userData.username || null,
       photo_url: photoUrl,
     };
   } else {
