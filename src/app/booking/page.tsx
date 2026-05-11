@@ -228,8 +228,13 @@ function BookingContent() {
         body: JSON.stringify({ name: formData.name, phone: formData.phone, date: selectedDate?.toISOString(), time: selectedTime, services: selectedServices, totalPrice: finalPrice, promoCodeId: promoData?.codeId, discountAmount: promoData?.discount ?? 0 }),
       });
       const data = await response.json();
-      if (data.success) setSuccess(true);
-      else setBookingError(data.error || 'Ошибка при создании записи');
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl;
+      } else if (data.success) {
+        setSuccess(true);
+      } else {
+        setBookingError(data.error || 'Ошибка при создании записи');
+      }
     } catch {
       setBookingError('Ошибка соединения с сервером. Попробуйте ещё раз.');
     } finally {

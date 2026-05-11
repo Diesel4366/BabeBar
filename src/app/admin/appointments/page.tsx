@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminNewAppointmentModal from '@/components/admin/AdminNewAppointmentModal';
 
-type AppointmentStatus = 'active' | 'cancelled_by_client' | 'cancelled_by_admin' | 'completed';
+type AppointmentStatus = 'active' | 'pending_payment' | 'cancelled_by_client' | 'cancelled_by_admin' | 'completed';
 
 interface AppointmentItem {
   id: string;
@@ -24,6 +24,7 @@ interface AppointmentItem {
 
 const STATUS_LABELS: Record<AppointmentStatus, string> = {
   active: 'Ожидается',
+  pending_payment: 'Ожидает оплаты',
   completed: 'Завершено',
   cancelled_by_admin: 'Отменено вами',
   cancelled_by_client: 'Отменено клиентом',
@@ -31,6 +32,7 @@ const STATUS_LABELS: Record<AppointmentStatus, string> = {
 
 const STATUS_COLORS: Record<AppointmentStatus, string> = {
   active: 'bg-blue-50 text-blue-600 border-blue-100',
+  pending_payment: 'bg-yellow-50 text-yellow-600 border-yellow-100',
   completed: 'bg-green-50 text-green-600 border-green-100',
   cancelled_by_admin: 'bg-red-50 text-red-600 border-red-100',
   cancelled_by_client: 'bg-red-50 text-red-600 border-red-100',
@@ -174,7 +176,7 @@ export default function AdminAppointments() {
                 <div>
                   <div className="text-[9px] font-black uppercase tracking-widest text-zinc-400 mb-3">Статус записи</div>
                   <div className="flex flex-wrap gap-2">
-                    {(['all', 'active', 'completed', 'cancelled_by_admin', 'cancelled_by_client'] as const).map(s => (
+                    {(['all', 'active', 'pending_payment', 'completed', 'cancelled_by_admin', 'cancelled_by_client'] as const).map(s => (
                       <button
                         key={s}
                         onClick={() => { setStatusFilter(s); resetPage(); }}

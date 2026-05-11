@@ -44,7 +44,7 @@ export async function POST(req: Request) {
       .from('appointments')
       .select('start_time, end_time')
       .eq('date', date)
-      .eq('status', 'active');
+      .in('status', ['active', 'pending_payment']);
 
     for (const app of existing ?? []) {
       const [sh, sm] = app.start_time.split(':').map(Number);

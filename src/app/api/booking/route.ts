@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyUserToken } from '@/lib/userAuth';
 import { normalizePhone } from '@/lib/phone';
+import { initPayment } from '@/lib/tinkoff';
 import { Service } from '@/types';
 
 export async function POST(req: Request) {
@@ -32,7 +33,7 @@ export async function POST(req: Request) {
       .from('appointments')
       .select('start_time, end_time')
       .eq('date', formattedDate)
-      .eq('status', 'active');
+      .in('status', ['active', 'pending_payment']);
 
     if (existingApps) {
       for (const app of existingApps) {
@@ -104,6 +105,9 @@ export async function POST(req: Request) {
       if (isValid) validatedPromoId = promo.id;
     }
 
+    const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://babebar.ru';
+    const usesPayment = process.env.TINKOFF_TERMINAL_KEY && totalPrice > 0;
+
     const { data: appointment, error: appError } = await supabaseAdmin
       .from('appointments')
       .insert([{
@@ -114,7 +118,8 @@ export async function POST(req: Request) {
         total_price: totalPrice,
         discount_amount: validatedPromoId ? discountAmount : 0,
         promo_code_id: validatedPromoId,
-        status: 'active'
+        status: usesPayment ? 'pending_payment' : 'active',
+        payment_status: usesPayment ? 'pending' : 'not_required',
       }])
       .select()
       .single();
@@ -145,11 +150,37 @@ export async function POST(req: Request) {
       }
     }
 
+    // Если есть эквайринг — инициируем оплату и возвращаем URL
+    if (usesPayment) {
+      const serviceNames = services.map((s: Service) => s.name).join(', ');
+      const payment = await initPayment({
+        orderId: appointment.id,
+        amount: totalPrice,
+        description: `BABEBAR: ${serviceNames}`,
+        successUrl: `${siteOrigin}/booking/success?id=${appointment.id}`,
+        failUrl: `${siteOrigin}/booking/fail?id=${appointment.id}`,
+        notificationUrl: `${siteOrigin}/api/payment/tinkoff/webhook`,
+      });
+
+      if (!payment) {
+        // Не удалось инициировать платёж — откатываем запись
+        await supabaseAdmin.from('appointments').delete().eq('id', appointment.id);
+        return NextResponse.json({ error: 'Не удалось инициировать оплату. Попробуйте ещё раз.' }, { status: 500 });
+      }
+
+      await supabaseAdmin
+        .from('appointments')
+        .update({ payment_id: payment.paymentId })
+        .eq('id', appointment.id);
+
+      return NextResponse.json({ paymentUrl: payment.paymentUrl, appointmentId: appointment.id });
+    }
+
     // 3.5 Получение предупреждений по складу
     const { getInventoryWarning } = await import('@/lib/inventory-alerts');
     const inventoryWarning = await getInventoryWarning(appointment.id);
 
-    // 4. Отправляем уведомления в Telegram
+    // 4. Отправляем уведомления в Telegram (только если оплата не используется)
     const telegramToken = process.env.TELEGRAM_TOKEN;
     const rawChatIds = process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '';
     const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
