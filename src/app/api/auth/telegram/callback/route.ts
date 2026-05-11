@@ -82,11 +82,12 @@ export async function GET(req: Request) {
 
   if (existing) {
     profileId = existing.id;
-    await supabaseAdmin.from('profiles').update({
+    const updateData: Record<string, string | null> = {
       name: tgData.first_name ?? null,
-      telegram_username: tgData.username ?? null,
       telegram_photo: tgData.photo_url ?? null,
-    }).eq('id', profileId);
+    };
+    if (tgData.username) updateData.telegram_username = tgData.username;
+    await supabaseAdmin.from('profiles').update(updateData).eq('id', profileId);
   } else {
     const { data: created, error } = await supabaseAdmin
       .from('profiles')
