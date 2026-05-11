@@ -55,7 +55,7 @@ function SuccessContent() {
         <div className="bg-white rounded-[2.5rem] p-12 max-w-md w-full text-center space-y-6 shadow-xl">
           <XCircle size={64} className="mx-auto text-red-400" />
           <h1 className="text-3xl font-black uppercase tracking-tighter text-[#0A0A0A]">Оплата не прошла</h1>
-          <p className="text-zinc-400 font-medium">Запись не создана. Попробуйте ещё раз или выберите другое время.</p>
+          <p className="text-zinc-400 font-medium">Что-то пошло не так при оплате. Попробуйте ещё раз или выберите оплату при визите.</p>
           <Link
             href="/booking"
             className="block w-full py-4 rounded-2xl font-black uppercase tracking-widest text-sm text-white text-center"
