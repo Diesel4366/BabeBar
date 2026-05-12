@@ -76,35 +76,55 @@ export async function PATCH(req: Request) {
 
     if (error) throw error;
 
-    // Уведомляем клиента в Telegram
+    // Уведомления в Telegram
     const telegramToken = process.env.TELEGRAM_TOKEN;
     if (telegramToken && data) {
       const profile = data.profiles as any;
-      const chatId = profile?.telegram_chat_id || profile?.telegram_id;
+      const chatIds = (process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+      const serviceNames = (data.appointment_services as any[])
+        ?.map((s: any) => s.services?.name).filter(Boolean).join(', ') || 'Услуга';
+      const dateFormatted = new Date(data.date + 'T12:00:00').toLocaleDateString('ru-RU', {
+        day: 'numeric', month: 'long', weekday: 'long',
+      });
+      const esc = (s?: string | null) =>
+        (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      const clientChatId = profile?.telegram_chat_id || profile?.telegram_id;
 
-      if (chatId) {
-        const serviceNames = (data.appointment_services as any[])
-          ?.map((s: any) => s.services?.name)
-          .filter(Boolean)
-          .join(', ') || 'Услуга';
-
-        const dateFormatted = new Date(data.date + 'T12:00:00').toLocaleDateString('ru-RU', {
-          day: 'numeric', month: 'long', weekday: 'long',
-        });
-
-        let message = '';
-
-        if (status === 'cancelled_by_admin') {
-          message = `❌ *Запись отменена*\n\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${data.start_time.substring(0, 5)} — ${data.end_time.substring(0, 5)}\n💅 *Услуги:* ${serviceNames}\n\nЕсли хотите записаться на другое время — просто напишите нам 🌸`;
-        } else if (status === 'completed') {
-          message = `✅ *Визит завершён!*\n\nСпасибо, что выбрали нас 🌸\n💅 *Услуги:* ${serviceNames}\n\nБудем рады видеть вас снова!`;
-        }
-
-        if (message) {
+      if (status === 'cancelled_by_admin') {
+        // Клиенту — запись отменена администратором
+        if (clientChatId) {
           await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: message, parse_mode: 'Markdown' }),
+            body: JSON.stringify({
+              chat_id: clientChatId,
+              text: `❌ <b>Ваша запись отменена</b>\n\n📅 <b>Дата:</b> ${esc(dateFormatted)}\n⏰ <b>Время:</b> ${data.start_time.substring(0, 5)} — ${data.end_time.substring(0, 5)}\n💅 <b>Услуги:</b> ${esc(serviceNames)}\n\nЕсли хотите записаться на другое время — просто напишите нам 🌸`,
+              parse_mode: 'HTML',
+            }),
+          });
+        }
+        // Администраторам — кто отменил (видно в чате что запись снята)
+        if (chatIds.length) {
+          const msg = `🔴 <b>Запись отменена администратором</b>\n\n👤 <b>Клиент:</b> ${esc(profile?.name)}\n📅 <b>Дата:</b> ${esc(dateFormatted)}\n⏰ <b>Время:</b> ${data.start_time.substring(0, 5)} — ${data.end_time.substring(0, 5)}\n💅 <b>Услуги:</b> ${esc(serviceNames)}`;
+          await Promise.allSettled(chatIds.map(chatId =>
+            fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ chat_id: chatId, text: msg, parse_mode: 'HTML' }),
+            })
+          ));
+        }
+      } else if (status === 'completed') {
+        // Клиенту — визит завершён
+        if (clientChatId) {
+          await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chat_id: clientChatId,
+              text: `✅ <b>Визит завершён!</b>\n\nСпасибо, что выбрали нас 🌸\n💅 <b>Услуги:</b> ${esc(serviceNames)}\n\nБудем рады видеть вас снова!`,
+              parse_mode: 'HTML',
+            }),
           });
         }
       }
