@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
   Calendar, Clock, User, Phone,
-  CheckCircle2, XCircle, Search, Filter, X, Send, Plus, RotateCcw, RefreshCw,
+  CheckCircle2, XCircle, Search, Filter, X, Send, Plus, RotateCcw, RefreshCw, CreditCard, Banknote,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import AdminNewAppointmentModal from '@/components/admin/AdminNewAppointmentModal';
@@ -67,6 +67,7 @@ export default function AdminAppointments() {
   const [showNewModal, setShowNewModal] = useState(false);
   const [refunding, setRefunding] = useState<string | null>(null);
   const [checking, setChecking] = useState<string | null>(null);
+  const [detailApp, setDetailApp] = useState<AppointmentItem | null>(null);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(searchTerm), 300);
@@ -286,7 +287,10 @@ export default function AdminAppointments() {
                 className="bg-white rounded-[2rem] border border-zinc-100 p-6 md:p-10 shadow-sm hover:shadow-xl hover:border-primary/20 transition-all duration-500 group"
               >
                 <div className="flex flex-col lg:flex-row justify-between gap-6 md:gap-10">
-                  <div className="flex gap-4 md:gap-8 items-start">
+                  <div
+                    className="flex gap-4 md:gap-8 items-start flex-1 cursor-pointer"
+                    onClick={() => setDetailApp(app)}
+                  >
                     <div className="w-12 h-12 md:w-20 md:h-20 bg-zinc-50 rounded-2xl md:rounded-3xl flex items-center justify-center text-zinc-400 flex-shrink-0 group-hover:bg-primary/5 group-hover:text-primary transition-colors">
                       <User size={24} className="md:w-8 md:h-8" />
                     </div>
@@ -330,7 +334,7 @@ export default function AdminAppointments() {
                         </div>
                       </div>
                     </div>
-                  </div>
+                  </div>{/* end clickable left */}
 
                   <div className="flex flex-col md:flex-row items-start md:items-center gap-6 lg:text-right border-t border-zinc-50 pt-6 lg:border-t-0 lg:pt-0">
                     <div className="flex-1 min-w-0">
@@ -469,6 +473,172 @@ export default function AdminAppointments() {
           />
         )}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {detailApp && (
+          <AppointmentDetailModal
+            app={detailApp}
+            onClose={() => setDetailApp(null)}
+          />
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+const PAYMENT_STATUS_LABELS: Record<string, string> = {
+  not_required: 'Наличными при визите',
+  pending: 'Ожидает оплаты',
+  paid: 'Оплачено онлайн',
+  failed: 'Ошибка оплаты',
+  refunded: 'Возврат выполнен',
+};
+
+function AppointmentDetailModal({ app, onClose }: { app: AppointmentItem; onClose: () => void }) {
+  const dateFormatted = new Date(app.date + 'T12:00:00').toLocaleDateString('ru-RU', {
+    day: 'numeric', month: 'long', weekday: 'long',
+  });
+
+  return (
+    <>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
+        className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] cursor-pointer"
+      />
+      <div className="fixed inset-0 flex items-end sm:items-center justify-center z-[101] pointer-events-none p-4">
+        <motion.div
+          initial={{ y: '100%', opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: '100%', opacity: 0 }}
+          transition={{ type: 'spring', damping: 28, stiffness: 320 }}
+          className="bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl pointer-events-auto overflow-hidden"
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between px-8 pt-8 pb-6 border-b border-zinc-100">
+            <div>
+              <h2 className="text-2xl font-black uppercase tracking-tighter text-[#0A0A0A] leading-none">
+                {app.client?.name || 'Без имени'}
+              </h2>
+              <div className="flex items-center gap-2 mt-2">
+                <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase border ${STATUS_COLORS[app.status]}`}>
+                  {STATUS_LABELS[app.status]}
+                </span>
+                {app.source && SOURCE_LABELS[app.source] && (
+                  <span className="px-3 py-1 rounded-full text-[8px] font-black uppercase border bg-zinc-50 text-zinc-400 border-zinc-100">
+                    {SOURCE_LABELS[app.source]}
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              className="w-10 h-10 rounded-full bg-zinc-100 hover:bg-zinc-200 flex items-center justify-center transition-colors flex-shrink-0"
+            >
+              <X size={18} className="text-zinc-500" />
+            </button>
+          </div>
+
+          <div className="px-8 py-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            {/* Client contacts */}
+            <div className="space-y-2">
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">Контакты</div>
+              <div className="flex flex-wrap gap-3">
+                <a
+                  href={`tel:${app.client?.phone}`}
+                  className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-zinc-50 text-sm font-bold text-[#0A0A0A] hover:bg-primary/5 transition-colors"
+                >
+                  <Phone size={14} style={{ color: '#D14D72' }} />
+                  {app.client?.phone || '—'}
+                </a>
+                {app.client?.telegram_username && (
+                  <a
+                    href={`https://t.me/${app.client.telegram_username}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-[#2AABEE]/10 text-sm font-bold text-[#2AABEE] hover:bg-[#2AABEE]/20 transition-colors"
+                  >
+                    <Send size={14} />
+                    @{app.client.telegram_username}
+                  </a>
+                )}
+              </div>
+            </div>
+
+            {/* Date & Time */}
+            <div className="space-y-2">
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">Дата и время</div>
+              <div className="flex items-center gap-3 px-5 py-4 rounded-2xl bg-zinc-50">
+                <Calendar size={18} style={{ color: '#D14D72' }} />
+                <span className="font-black text-[#0A0A0A] uppercase tracking-tight">{dateFormatted}</span>
+                <span className="text-zinc-300">·</span>
+                <Clock size={18} style={{ color: '#D14D72' }} />
+                <span className="font-black text-[#0A0A0A]">{app.startTime.substring(0, 5)} — {app.endTime.substring(0, 5)}</span>
+              </div>
+            </div>
+
+            {/* Services */}
+            <div className="space-y-2">
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">
+                Услуги ({app.services?.length ?? 0})
+              </div>
+              <div className="space-y-2">
+                {app.services?.map((s, i) => (
+                  <div key={i} className="flex items-center gap-3 px-5 py-3.5 rounded-2xl bg-zinc-50">
+                    <span className="text-base">💅</span>
+                    <span className="font-bold text-sm text-[#0A0A0A] uppercase tracking-tight">{s.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Payment */}
+            <div className="space-y-2">
+              <div className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-300">Оплата</div>
+              <div className="px-5 py-4 rounded-2xl bg-zinc-50 space-y-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-bold text-zinc-500">
+                    {app.paymentStatus === 'not_required' ? <Banknote size={16} /> : <CreditCard size={16} />}
+                    {PAYMENT_STATUS_LABELS[app.paymentStatus] ?? app.paymentStatus}
+                  </div>
+                  <div className="text-2xl font-black text-[#0A0A0A]">{app.totalPrice} ₽</div>
+                </div>
+                {app.prepaidAmount > 0 && (
+                  <div className="border-t border-zinc-200 pt-3 space-y-1">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-green-600">✓ Оплачено онлайн</span>
+                      <span className="text-green-600">{app.prepaidAmount} ₽</span>
+                    </div>
+                    {app.prepaidAmount < app.totalPrice && (
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-zinc-400">При визите</span>
+                        <span className="text-zinc-400">{app.totalPrice - app.prepaidAmount} ₽</span>
+                      </div>
+                    )}
+                    {app.paymentStatus === 'refunded' && (
+                      <div className="flex justify-between text-xs font-bold">
+                        <span className="text-orange-500">↩ Возврат выполнен</span>
+                        <span className="text-orange-500">{app.prepaidAmount} ₽</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="px-8 pb-8 pt-2">
+            <button
+              onClick={onClose}
+              className="w-full py-4 rounded-2xl bg-zinc-100 text-[#0A0A0A] font-black text-[10px] uppercase tracking-widest hover:bg-zinc-200 transition-all"
+            >
+              Закрыть
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </>
   );
 }
