@@ -240,24 +240,29 @@ export async function POST(req: Request) {
       const rawChatIds = process.env.TELEGRAM_ADMIN_CHAT_IDS ?? '';
       const chatIds = rawChatIds.split(',').map(s => s.trim()).filter(Boolean);
 
+      const esc = (s?: string | null) =>
+        (s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
       if (chatIds.length > 0) {
-        let adminMessage = `🌟 *Новая запись!*\n\n👤 *Клиент:* ${name}\n📞 *Телефон:* ${phone}`;
+        let adminMessage = `🌟 <b>Новая запись!</b>\n\n👤 <b>Клиент:</b> ${esc(name)}\n📞 <b>Телефон:</b> ${esc(phone)}`;
         if (profileData?.telegram_username) {
-          adminMessage += `\n✈️ *Telegram:* @${profileData.telegram_username}`;
+          adminMessage += `\n✈️ <b>Telegram:</b> @${esc(profileData.telegram_username)}`;
         }
-        adminMessage += `\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${totalPrice} ₽`;
-        if (validatedPromoId && discountAmount > 0) adminMessage += ` _(скидка ${discountAmount} ₽)_`;
+        adminMessage += `\n📅 <b>Дата:</b> ${esc(dateFormatted)}\n⏰ <b>Время:</b> ${time} — ${endTime}\n💅 <b>Услуги:</b> ${esc(serviceNames)}\n💰 <b>Сумма:</b> ${totalPrice} ₽`;
+        if (validatedPromoId && discountAmount > 0) adminMessage += ` <i>(скидка ${discountAmount} ₽)</i>`;
         if (inventoryWarning) {
           adminMessage += inventoryWarning;
         }
 
-        await Promise.allSettled(chatIds.map(chatId =>
-          fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
+        await Promise.allSettled(chatIds.map(async chatId => {
+          const r = await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chat_id: chatId, text: adminMessage, parse_mode: 'Markdown' }),
-          })
-        ));
+            body: JSON.stringify({ chat_id: chatId, text: adminMessage, parse_mode: 'HTML' }),
+          });
+          const body = await r.json();
+          if (!body.ok) console.error(`[booking] admin TG error chatId=${chatId}:`, JSON.stringify(body));
+        }));
       }
 
       // 4б. Уведомление клиенту
@@ -265,16 +270,16 @@ export async function POST(req: Request) {
       if (clientChatId) {
         const { getSettings } = await import('@/lib/settings');
         const siteSettings = await getSettings();
-        let clientMessage = `✅ *Запись подтверждена!*\n\n📅 *Дата:* ${dateFormatted}\n⏰ *Время:* ${time} — ${endTime}\n💅 *Услуги:* ${serviceNames}\n💰 *Сумма:* ${totalPrice} ₽`;
+        let clientMessage = `✅ <b>Запись подтверждена!</b>\n\n📅 <b>Дата:</b> ${esc(dateFormatted)}\n⏰ <b>Время:</b> ${time} — ${endTime}\n💅 <b>Услуги:</b> ${esc(serviceNames)}\n💰 <b>Сумма:</b> ${totalPrice} ₽`;
         if (siteSettings.address) {
-          clientMessage += `\n\n📍 *Адрес:* ${siteSettings.address}`;
+          clientMessage += `\n\n📍 <b>Адрес:</b> ${esc(siteSettings.address)}`;
         }
         clientMessage += `\n\nБудем рады вас видеть! 🌸`;
 
         await fetch(`https://api.telegram.org/bot${telegramToken}/sendMessage`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ chat_id: clientChatId, text: clientMessage, parse_mode: 'Markdown' }),
+          body: JSON.stringify({ chat_id: clientChatId, text: clientMessage, parse_mode: 'HTML' }),
         });
       }
     }
