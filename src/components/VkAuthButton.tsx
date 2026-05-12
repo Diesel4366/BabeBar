@@ -41,7 +41,6 @@ export default function VkAuthButton({ state }: { state?: string }) {
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 access_token: tokens.access_token,
-                user_id: tokens.user_id,
                 state: state ?? '',
               }),
             });

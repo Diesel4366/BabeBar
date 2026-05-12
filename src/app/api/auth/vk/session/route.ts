@@ -2,31 +2,44 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { createUserToken } from '@/lib/userAuth';
 
+interface VkUserInfo {
+  user_id: string;
+  first_name?: string;
+  last_name?: string;
+  avatar?: string;
+}
+
 export async function POST(req: Request) {
-  const { access_token, user_id, state } = await req.json() as {
+  const { access_token, state } = await req.json() as {
     access_token: string;
-    user_id: number;
     state?: string;
   };
 
-  if (!access_token || !user_id) {
-    return NextResponse.json({ error: 'missing params' }, { status: 400 });
+  if (!access_token) {
+    return NextResponse.json({ error: 'missing access_token' }, { status: 400 });
   }
 
-  // Проверяем токен через VK API и получаем данные пользователя
-  const apiRes = await fetch(
-    `https://api.vk.com/method/users.get?user_ids=${user_id}&fields=photo_100&access_token=${access_token}&v=5.131`
-  );
-  const apiData = await apiRes.json();
-  const vkUser = apiData?.response?.[0];
+  // VK ID v3 — используем id.vk.com/oauth2/user_info (не api.vk.com)
+  const userInfoRes = await fetch('https://id.vk.com/oauth2/user_info', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: new URLSearchParams({
+      client_id: process.env.VK_APP_ID!,
+      access_token,
+    }),
+  });
 
-  if (!vkUser || String(vkUser.id) !== String(user_id)) {
-    return NextResponse.json({ error: 'invalid token' }, { status: 401 });
+  const userInfoData = await userInfoRes.json();
+  const vkUser: VkUserInfo | undefined = userInfoData?.user;
+
+  if (!vkUser?.user_id) {
+    console.error('VK user_info error:', JSON.stringify(userInfoData));
+    return NextResponse.json({ error: 'vk_user_info_failed' }, { status: 401 });
   }
 
-  const vkId = String(vkUser.id);
-  const name = [vkUser.first_name, vkUser.last_name].filter(Boolean).join(' ');
-  const photo = vkUser.photo_100 ?? null;
+  const vkId = String(vkUser.user_id);
+  const name = [vkUser.first_name, vkUser.last_name].filter(Boolean).join(' ') || 'VK User';
+  const photo = vkUser.avatar ?? null;
 
   // Найти или создать профиль
   const { data: existing } = await supabaseAdmin
