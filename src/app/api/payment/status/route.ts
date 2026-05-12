@@ -14,13 +14,17 @@ export async function GET(req: Request) {
 
   if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  type AppRow = typeof data & {
-    appointment_services: { services: { name: string } | null }[];
+  const raw = data as unknown as {
+    status: string; payment_status: string; date: string;
+    start_time: string; total_price: number;
+    appointment_services: { services: { name: string } | { name: string }[] | null }[];
   };
-  const row = data as AppRow;
-  const services = (row.appointment_services ?? [])
-    .map(as => as.services?.name)
-    .filter(Boolean) as string[];
+  const services = (raw.appointment_services ?? []).map(as => {
+    const s = as.services;
+    if (!s) return null;
+    if (Array.isArray(s)) return s[0]?.name ?? null;
+    return (s as { name: string }).name;
+  }).filter(Boolean) as string[];
 
   return NextResponse.json({
     status: data.status,
