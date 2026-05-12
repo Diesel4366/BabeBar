@@ -58,7 +58,7 @@ export default function ProfilePage() {
   const [birthdaySaving, setBirthdaySaving] = useState(false);
   const [phoneInput, setPhoneInput] = useState('');
   const [phoneSaving, setPhoneSaving] = useState(false);
-  const [phoneMerged, setPhoneMerged] = useState(false);
+  const [linkedToast, setLinkedToast] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -72,6 +72,11 @@ export default function ProfilePage() {
       const appts = await apptRes.json();
       setAppointments(Array.isArray(appts) ? appts : []);
       setLoading(false);
+      if (new URLSearchParams(window.location.search).get('linked') === '1') {
+        setLinkedToast(true);
+        setTimeout(() => setLinkedToast(false), 4000);
+        window.history.replaceState({}, '', '/profile');
+      }
     }
     load();
   }, [router]);
@@ -101,21 +106,11 @@ export default function ProfilePage() {
   const allVisits = appointments.filter(a => !a.status.startsWith('cancelled'));
   const totalSpent = completed.reduce((sum, a) => sum + (a.total_price || 0), 0);
 
-  const handleSavePhone = async () => {
+  const handleSavePhone = () => {
     if (!phoneInput || phoneInput.replace(/\D/g, '').length < 10) return;
     setPhoneSaving(true);
-    const res = await fetch('/api/auth/link-phone', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ phone: phoneInput }),
-    });
-    const data = await res.json();
-    setPhoneSaving(false);
-    if (res.ok) {
-      setPhoneMerged(data.merged);
-      setUser(u => u ? { ...u, phone: phoneInput } : u);
-      if (data.merged) window.location.reload();
-    }
+    // Полная навигация — cookie обновляется надёжно через редирект на сервере
+    window.location.href = `/api/auth/link-phone?phone=${encodeURIComponent(phoneInput)}`;
   };
 
   const handleSaveBirthday = async () => {
@@ -169,6 +164,13 @@ export default function ProfilePage() {
           <LogOut size={16} />
         </button>
       </div>
+
+      {linkedToast && (
+        <div className="fixed top-6 left-1/2 -translate-x-1/2 z-50 px-6 py-3 rounded-2xl text-white text-xs font-black uppercase tracking-widest shadow-xl transition-all"
+          style={{ backgroundColor: '#22C55E' }}>
+          ✓ Аккаунты объединены
+        </div>
+      )}
 
       <div className="max-w-xl mx-auto px-6 py-8 space-y-8">
 
@@ -353,11 +355,6 @@ export default function ProfilePage() {
                   : 'Сохранить'}
               </button>
             </div>
-            {phoneMerged && (
-              <div className="text-[11px] font-black uppercase tracking-widest text-green-500 text-center">
-                ✓ Аккаунты объединены
-              </div>
-            )}
           </div>
         )}
 

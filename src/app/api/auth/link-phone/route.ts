@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase';
 import { verifyUserToken, createUserToken } from '@/lib/userAuth';
 
@@ -11,29 +11,38 @@ function normalizePhone(raw: string): string {
   return '+' + digits;
 }
 
-export async function POST(req: Request) {
+// GET /api/auth/link-phone?phone=... — полная навигация, cookie ставится надёжно через редирект
+export async function GET(req: Request) {
+  const url = new URL(req.url);
+  const headersList = await headers();
+  const host = headersList.get('host') ?? 'babe-bar.vercel.app';
+  const proto = host.includes('localhost') ? 'http' : 'https';
+  const origin = `${proto}://${host}`;
+
+  const fail = (msg: string) =>
+    NextResponse.redirect(new URL(`/profile?phone_error=${encodeURIComponent(msg)}`, origin));
+
   const store = await cookies();
   const sessionToken = store.get('user_session')?.value;
-  if (!sessionToken) return NextResponse.json({ error: 'not_authenticated' }, { status: 401 });
+  if (!sessionToken) return NextResponse.redirect(new URL('/login', origin));
 
   const currentProfileId = await verifyUserToken(sessionToken, process.env.ADMIN_SECRET!);
-  if (!currentProfileId) return NextResponse.json({ error: 'invalid_session' }, { status: 401 });
+  if (!currentProfileId) return NextResponse.redirect(new URL('/login', origin));
 
-  const { phone } = await req.json() as { phone: string };
-  if (!phone) return NextResponse.json({ error: 'missing_phone' }, { status: 400 });
+  const rawPhone = url.searchParams.get('phone') ?? '';
+  if (!rawPhone) return fail('missing_phone');
 
-  const normalizedPhone = normalizePhone(phone);
+  const normalizedPhone = normalizePhone(rawPhone);
 
-  // Текущий профиль (VK-новый)
   const { data: currentProfile } = await supabaseAdmin
     .from('profiles')
     .select('id, vk_id, phone')
     .eq('id', currentProfileId)
     .maybeSingle();
 
-  if (!currentProfile) return NextResponse.json({ error: 'profile_not_found' }, { status: 404 });
+  if (!currentProfile) return NextResponse.redirect(new URL('/login', origin));
 
-  // Ищем существующий профиль с таким телефоном (не текущий)
+  // Ищем существующий профиль с таким телефоном
   const { data: existingProfile } = await supabaseAdmin
     .from('profiles')
     .select('id')
@@ -44,7 +53,7 @@ export async function POST(req: Request) {
   let targetProfileId: string;
 
   if (existingProfile) {
-    // Переносим vk_id в существующий профиль и удаляем новый
+    // Переносим vk_id в существующий профиль, удаляем новый
     await supabaseAdmin
       .from('profiles')
       .update({ vk_id: currentProfile.vk_id })
@@ -54,7 +63,6 @@ export async function POST(req: Request) {
 
     targetProfileId = existingProfile.id;
   } else {
-    // Просто сохраняем телефон на текущем профиле
     await supabaseAdmin
       .from('profiles')
       .update({ phone: normalizedPhone })
@@ -63,9 +71,12 @@ export async function POST(req: Request) {
     targetProfileId = currentProfileId;
   }
 
-  // Обновляем сессию на правильный профиль
   const newToken = await createUserToken(targetProfileId, process.env.ADMIN_SECRET!);
-  const res = NextResponse.json({ ok: true, merged: !!existingProfile });
+  const redirectUrl = existingProfile
+    ? new URL('/profile?linked=1', origin)
+    : new URL('/profile', origin);
+
+  const res = NextResponse.redirect(redirectUrl);
   res.cookies.set('user_session', newToken, {
     httpOnly: true,
     secure: true,
