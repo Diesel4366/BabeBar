@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase';
 import { getPaymentState } from '@/lib/tinkoff';
+import { sendBookingNotifications } from '@/lib/booking-notifications';
 
 export async function POST(req: Request) {
   try {
@@ -23,11 +24,19 @@ export async function POST(req: Request) {
     }
 
     if (tinkoffStatus === 'CONFIRMED') {
-      await supabaseAdmin
+      const { data: updated } = await supabaseAdmin
         .from('appointments')
         .update({ status: 'active', payment_status: 'paid' })
         .eq('id', appointmentId)
-        .eq('status', 'pending_payment');
+        .eq('status', 'pending_payment')
+        .select('id')
+        .maybeSingle();
+
+      // Отправляем уведомления только если запись реально перешла в active
+      // (eq status='pending_payment' защищает от повторной отправки при двойном вызове)
+      if (updated) {
+        sendBookingNotifications(appointmentId).catch(console.error);
+      }
       return NextResponse.json({ result: 'paid' });
     }
 
