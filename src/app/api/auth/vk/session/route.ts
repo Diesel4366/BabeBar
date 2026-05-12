@@ -49,6 +49,7 @@ export async function POST(req: Request) {
     .maybeSingle();
 
   let profileId: string;
+  let isNew = false;
 
   if (existing) {
     profileId = existing.id;
@@ -64,10 +65,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: `db: ${error?.message}` }, { status: 500 });
     }
     profileId = created.id;
+    isNew = true;
   }
 
   const token = await createUserToken(profileId, process.env.ADMIN_SECRET!);
-  const redirectTo = state === 'booking' ? '/booking?restore=1' : '/profile';
+  const redirectTo = isNew
+    ? '/link-phone'
+    : state === 'booking' ? '/booking?restore=1' : '/profile';
 
   const res = NextResponse.json({ redirectTo });
   res.cookies.set('user_session', token, {
