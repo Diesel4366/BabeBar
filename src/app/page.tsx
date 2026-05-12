@@ -159,8 +159,17 @@ export default async function Home() {
 
       <footer className="py-12 border-t border-zinc-100 bg-white">
         <div className="container-custom flex flex-col md:flex-row justify-between items-center gap-10">
-          <div className="text-2xl font-black tracking-tighter">
-            BABE<span className="text-primary italic">BAR</span>
+          <div className="flex items-center gap-6">
+            <div className="text-2xl font-black tracking-tighter">
+              BABE<span className="text-primary italic">BAR</span>
+            </div>
+            <iframe
+              src="https://yandex.ru/sprav/widget/rating-badge/154956853752?type=rating"
+              width="150"
+              height="50"
+              frameBorder={0}
+              style={{ display: 'block' }}
+            />
           </div>
           <div className="text-zinc-300 text-[10px] font-black uppercase tracking-[0.3em]">
             &copy; {new Date().getFullYear()} {settings.master_name}
