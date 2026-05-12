@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronLeft, Clock, CheckCircle2, Phone, User, Star, ArrowRight, Plus, LogIn, Tag, X } from 'lucide-react';
+import { ChevronLeft, Clock, CheckCircle2, Phone, User, Star, ArrowRight, Plus, Tag, X } from 'lucide-react';
 import Link from 'next/link';
 import { Service } from '@/types';
 import { CATEGORY_ORDER } from '@/lib/config';
@@ -69,7 +69,8 @@ function BookingContent() {
           } catch {}
         }
       } else {
-        setAuthUser(null);
+        // Авторизация обязательна — редирект на логин с сохранением состояния
+        window.location.href = '/login?state=booking';
       }
     });
   }, [searchParams]);
@@ -194,17 +195,6 @@ function BookingContent() {
     }
 
     return !occupiedIntervals.some(iv => newStart < toMins(iv.end) && newEnd > toMins(iv.start));
-  };
-
-  const handleTelegramLogin = () => {
-    sessionStorage.setItem('booking_state', JSON.stringify({
-      selectedServices,
-      selectedDate: selectedDate?.toISOString() ?? null,
-      selectedTime,
-      step,
-    }));
-    const redirectUri = encodeURIComponent(`${window.location.origin}/api/auth/telegram/callback`);
-    window.location.href = `https://oauth.telegram.org/auth?client_id=8752821995&redirect_uri=${redirectUri}&response_type=code&scope=openid+profile&state=booking`;
   };
 
   const formatPhone = (value: string) => {
@@ -549,19 +539,6 @@ function BookingContent() {
 
               <form onSubmit={handleSubmit} className="space-y-12">
                 <div className="space-y-4">
-                  {/* Кнопка входа для незалогиненных */}
-                  {authUser === null && (
-                    <button
-                      type="button"
-                      onClick={handleTelegramLogin}
-                      className="w-full flex items-center justify-center gap-3 py-5 rounded-3xl border border-zinc-100 bg-white font-black text-sm uppercase tracking-widest text-zinc-600 hover:border-zinc-200 transition-all"
-                    >
-                      <LogIn size={18} style={{ color: '#D14D72' }} />
-                      Войти через Telegram
-                      <span className="text-[9px] font-black uppercase tracking-widest text-zinc-300 ml-1">— автозаполнение</span>
-                    </button>
-                  )}
-
                   {/* Бейдж авторизованного пользователя */}
                   {authUser && (
                     <div className="flex items-center gap-3 px-6 py-4 rounded-3xl border border-zinc-100 bg-white">

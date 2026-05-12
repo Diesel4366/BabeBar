@@ -64,20 +64,6 @@ export default async function LoginPage(props: { searchParams: Promise<{ error?:
           </a>
 
           <VkAuthButton state="" />
-
-          <div className="relative py-2">
-            <span className="absolute inset-x-0 top-1/2 h-px bg-zinc-100" />
-            <span className="relative bg-white px-4 text-[10px] font-black text-zinc-300 uppercase tracking-widest flex justify-center">
-              или
-            </span>
-          </div>
-
-          <Link
-            href="/booking"
-            className="w-full flex items-center justify-center py-4 rounded-2xl border border-zinc-100 text-xs font-black uppercase tracking-widest text-zinc-500 hover:border-zinc-200 transition-all"
-          >
-            Записаться без регистрации
-          </Link>
         </div>
 
         <p className="text-center mt-8 text-[10px] font-bold text-zinc-300 uppercase tracking-widest">
