@@ -28,17 +28,28 @@ export async function createAdminToken(secret: string): Promise<string> {
   return `${payload}.${bytesToBase64url(sig)}`;
 }
 
+let _cachedVerifyKey: CryptoKey | null = null;
+let _cachedVerifySecret = '';
+
+async function getVerifyKey(secret: string): Promise<CryptoKey> {
+  if (_cachedVerifyKey && _cachedVerifySecret === secret) return _cachedVerifyKey;
+  const encoder = new TextEncoder();
+  _cachedVerifyKey = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['verify']
+  );
+  _cachedVerifySecret = secret;
+  return _cachedVerifyKey;
+}
+
 export async function verifyAdminToken(token: string, secret: string): Promise<boolean> {
   try {
     const parts = token.split('.');
     if (parts.length !== 2) return false;
     const [payloadB64, sigB64] = parts;
     const encoder = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw', encoder.encode(secret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false, ['verify']
-    );
+    const key = await getVerifyKey(secret);
     const sig = base64urlToBuffer(sigB64);
     return await crypto.subtle.verify('HMAC', key, sig, encoder.encode(payloadB64));
   } catch {
