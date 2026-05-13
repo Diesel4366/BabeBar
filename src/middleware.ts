@@ -4,7 +4,7 @@ import { verifyAdminToken } from '@/lib/auth';
 
 const PUBLIC = ['/admin/login', '/api/admin/login'];
 
-export async function proxy(req: NextRequest) {
+export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(p => pathname.startsWith(p))) return NextResponse.next();
 
