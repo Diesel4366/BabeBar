@@ -127,7 +127,14 @@ export async function POST(req: Request) {
       .select()
       .single();
 
-    if (appError || !appointment) throw appError || new Error('Failed to create appointment');
+    if (appError) {
+      // 23P01 = exclusion_violation: two requests raced to the same slot
+      if ((appError as any).code === '23P01') {
+        return NextResponse.json({ error: 'Это время уже занято. Пожалуйста, выберите другое.' }, { status: 400 });
+      }
+      throw appError;
+    }
+    if (!appointment) throw new Error('Failed to create appointment');
 
     // 3. Привязываем услуги
     const appointmentServices = services.map((s: Service) => ({
@@ -141,16 +148,9 @@ export async function POST(req: Request) {
 
     if (servicesError) throw servicesError;
 
-    // Инкрементируем счётчик промокода
+    // Инкрементируем счётчик промокода атомарно через одно SQL UPDATE
     if (validatedPromoId) {
-      const { data: pc } = await supabaseAdmin
-        .from('promo_codes').select('used_count').eq('id', validatedPromoId).single();
-      if (pc) {
-        await supabaseAdmin
-          .from('promo_codes')
-          .update({ used_count: pc.used_count + 1 })
-          .eq('id', validatedPromoId);
-      }
+      await supabaseAdmin.rpc('increment_promo_used_count', { promo_id: validatedPromoId });
     }
 
     // Если есть эквайринг — инициируем оплату и возвращаем URL
