@@ -42,11 +42,17 @@ export async function POST(req: Request) {
   const photo = vkUser.avatar ?? null;
 
   // Найти или создать профиль
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: lookupError } = await supabaseAdmin
     .from('profiles')
     .select('id')
     .eq('vk_id', vkId)
     .maybeSingle();
+
+  // PGRST116 = больше одной строки — аномалия, лечится через link-phone
+  if (lookupError) {
+    console.error('[vk/session] profile lookup error:', lookupError);
+    return NextResponse.json({ error: 'profile_lookup_failed' }, { status: 500 });
+  }
 
   let profileId: string;
   let isNew = false;

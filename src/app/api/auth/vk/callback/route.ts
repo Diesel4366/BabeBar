@@ -61,11 +61,16 @@ export async function GET(req: Request) {
   const photo = vkUser.photo_100 ?? null;
 
   // 3. Найти или создать профиль
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: lookupError } = await supabaseAdmin
     .from('profiles')
     .select('id')
     .eq('vk_id', vkId)
     .maybeSingle();
+
+  if (lookupError) {
+    console.error('[vk/callback] profile lookup error:', lookupError);
+    return fail('DB lookup error');
+  }
 
   let profileId: string;
 

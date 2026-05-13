@@ -53,13 +53,43 @@ export async function GET(req: Request) {
   let targetProfileId: string;
 
   if (existingProfile) {
-    // Переносим vk_id в существующий профиль, удаляем новый
+    // Правильный порядок слияния профилей:
+    // 1. Сначала обнуляем vk_id у VK-профиля — иначе UNIQUE constraint не даст
+    //    поставить тот же vk_id на целевой профиль (молчаливый провал без этого шага).
+    await supabaseAdmin
+      .from('profiles')
+      .update({ vk_id: null })
+      .eq('id', currentProfileId);
+
+    // 2. Переносим vk_id на старый (телефонный) профиль
     await supabaseAdmin
       .from('profiles')
       .update({ vk_id: currentProfile.vk_id })
       .eq('id', existingProfile.id);
 
-    await supabaseAdmin.from('profiles').delete().eq('id', currentProfileId);
+    // 3. Переносим все записи на целевой профиль —
+    //    FK NO ACTION не даст удалить профиль пока записи на нём висят.
+    await supabaseAdmin
+      .from('appointments')
+      .update({ client_id: existingProfile.id })
+      .eq('client_id', currentProfileId);
+
+    // 4. Переносим персональные промокоды
+    await supabaseAdmin
+      .from('promo_codes')
+      .update({ profile_id: existingProfile.id })
+      .eq('profile_id', currentProfileId);
+
+    // 5. Теперь удаляем опустевший VK-профиль
+    const { error: deleteError } = await supabaseAdmin
+      .from('profiles')
+      .delete()
+      .eq('id', currentProfileId);
+
+    if (deleteError) {
+      console.error('[link-phone] failed to delete VK profile:', deleteError);
+      return fail('merge_failed');
+    }
 
     targetProfileId = existingProfile.id;
   } else {
