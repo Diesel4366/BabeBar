@@ -623,8 +623,6 @@ function BookingContent() {
                   <div className="grid grid-cols-1 gap-2">
                     {([
                       { id: 'cash', label: 'Наличными при визите', sub: 'Оплата на месте' },
-                      { id: 'online_50', label: 'Предоплата 50%', sub: `${Math.ceil(finalPrice / 2)} ₽ сейчас + ${finalPrice - Math.ceil(finalPrice / 2)} ₽ при визите` },
-                      { id: 'online_100', label: 'Полная оплата онлайн', sub: `${finalPrice} ₽ сейчас` },
                     ] as const).map(opt => (
                       <button
                         key={opt.id}
